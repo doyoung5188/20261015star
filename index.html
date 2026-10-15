@@ -1,0 +1,745 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="IAU 공인 항성 이름과 한글 표기·명칭 유래·연주시차·절대등급·유효온도를 찾아보는 광고 없는 별 이름 도감">
+<title>항성 이름 도감</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=IBM+Plex+Sans+KR:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: star-chart band on top, filter bar, then a dense catalog list; detail drawer on select */
+:root{
+  --bg:#f3f4f7; --surface:#ffffff; --ink:#151a2b; --muted:#5d6479; --line:#dde0e8;
+  --accent:#3b4fd8; --gold:#b07a12; --exo:#0f8a7a; --sky:#0e1430; --skyline:#283158; --star:#fff6dc;
+  --f-display:"Gowun Batang", "Noto Serif KR", serif;
+  --f-body:"IBM Plex Sans KR", system-ui, sans-serif;
+  --f-mono:"IBM Plex Mono", ui-monospace, monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0b0e1a; --surface:#131829; --ink:#e7e9f2; --muted:#9097ad; --line:#252c44;
+  --accent:#8b9bff; --gold:#e3b456; --exo:#4fd1bd; --sky:#070a16; --skyline:#1d2440; --star:#fff6dc; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0b0e1a; --surface:#131829; --ink:#e7e9f2; --muted:#9097ad; --line:#252c44;
+  --accent:#8b9bff; --gold:#e3b456; --exo:#4fd1bd; --sky:#070a16; --skyline:#1d2440; --star:#fff6dc; color-scheme:dark}
+*{box-sizing:border-box}
+html{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+body{margin:0;font-size:14px}
+img{max-width:100%}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.55}
+.wrap{max-width:1080px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:28px 48px;display:flex;flex-direction:column;gap:20px}
+header h1{font-family:var(--f-display);font-weight:700;font-size:clamp(28px,5vw,40px);margin:0;letter-spacing:-.01em;text-wrap:balance}
+header p{margin:6px 0 0;color:var(--muted);max-width:62ch}
+.sky{background:var(--sky);border-radius:14px;overflow:hidden;position:relative}
+.sky canvas{display:block;width:100%;height:auto;aspect-ratio:2.4/1;max-width:100%;cursor:crosshair}
+.sky .cap{position:absolute;left:12px;bottom:8px;font:11px var(--f-mono);color:#8a93b8;letter-spacing:.04em;pointer-events:none}
+.sky .tip{position:absolute;pointer-events:none;background:rgba(255,255,255,.95);color:#151a2b;font-size:12px;padding:4px 8px;border-radius:6px;white-space:nowrap;transform:translate(-50%,-130%)}
+.controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.controls input[type=search]{flex:1 1 260px;min-width:0;font:inherit;padding:10px 14px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--ink)}
+.controls select{font:inherit;padding:9px 10px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--ink);max-width:100%}
+.seg{display:flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--surface)}
+.seg button{font:inherit;font-size:13px;border:0;background:none;color:var(--muted);padding:9px 12px;cursor:pointer}
+.seg button[aria-pressed=true]{background:var(--accent);color:#fff}
+input:focus-visible,select:focus-visible,button:focus-visible,.row:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.count{font:12px var(--f-mono);color:var(--muted);letter-spacing:.03em}
+.list{background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.row{display:grid;grid-template-columns:44px minmax(0,1.4fr) minmax(0,1fr) minmax(0,1fr) 70px;gap:12px;align-items:center;padding:10px 16px;border-top:1px solid var(--line);cursor:pointer}
+.row:first-child{border-top:0}
+.row:hover{background:color-mix(in srgb,var(--accent) 6%,transparent)}
+.dot{width:44px;height:28px;display:grid;place-items:center}
+.dot i{display:block;border-radius:50%;background:var(--gold);box-shadow:0 0 6px color-mix(in srgb,var(--gold) 60%,transparent)}
+.row.exo .dot i{background:var(--exo);box-shadow:none}
+.nm{min-width:0}
+.nm b{font-family:var(--f-display);font-weight:700;font-size:19px;line-height:1.3;display:block;overflow-wrap:anywhere}
+.nm b.en{font-family:var(--f-body);font-weight:600;font-size:17px}
+.nm small{color:var(--muted);font-size:13px}
+.des{font-family:var(--f-mono);font-size:13px;min-width:0;overflow-wrap:anywhere}
+.con{font-size:13px;color:var(--muted);min-width:0}
+.mag{font-family:var(--f-mono);font-size:13px;text-align:right;font-variant-numeric:tabular-nums}
+.hdr{display:grid;grid-template-columns:44px minmax(0,1.4fr) minmax(0,1fr) minmax(0,1fr) 70px;gap:12px;padding:10px 16px;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--line)}
+.hdr span:last-child{text-align:right}
+.empty{padding:40px 16px;text-align:center;color:var(--muted)}
+.more{display:block;margin:0 auto;font:inherit;padding:10px 18px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer}
+.chip{display:inline-block;font-size:11px;padding:1px 7px;border-radius:99px;border:1px solid currentColor;margin-left:6px;vertical-align:1px}
+.chip.t{color:var(--gold)} .chip.e{color:var(--exo)} .chip.u{color:var(--muted)} .chip.o{color:var(--accent)}
+.phys{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.pc{background:var(--surface);padding:10px 12px;display:flex;flex-direction:column;gap:2px;min-width:0}
+.pk{font-size:11.5px;letter-spacing:.06em;color:var(--muted)}
+.pv{font-family:var(--f-mono);font-size:22px;font-weight:500;font-variant-numeric:tabular-nums;line-height:1.25}
+.pv small{font-size:13px;color:var(--muted);margin-left:4px}
+.pn{font-size:11.5px;color:var(--muted);overflow-wrap:anywhere;display:flex;align-items:center;gap:5px}
+.tsw{display:inline-block;width:10px;height:10px;border-radius:50%;border:1px solid var(--line);flex:none}
+.pmiss{margin:0;font-size:13px;color:var(--muted)}
+.dlg{max-height:calc(100dvh - 48px);overflow-y:auto}
+.note{margin:0;padding:10px 12px;border-radius:10px;background:color-mix(in srgb,var(--accent) 8%,transparent);font-size:14px}
+.org{font-family:var(--f-body);color:var(--accent);font-size:12px}
+.row.un .dot i{background:none;border:1.5px solid var(--muted);box-shadow:none}
+dialog{border:0;border-radius:16px;padding:0;max-width:min(520px,calc(100vw - 32px));width:100%;background:var(--surface);color:var(--ink)}
+dialog::backdrop{background:rgba(5,8,20,.55)}
+.dlg{padding:22px;display:flex;flex-direction:column;gap:14px}
+.dlg h2{font-family:var(--f-display);font-size:32px;margin:0;line-height:1.2}
+.dlg .ko{color:var(--muted);margin-top:-8px;font-size:16px}
+.dlg .ko:empty{display:none}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:6px 16px;margin:0}
+.kv dt{color:var(--muted);font-size:13px}
+.kv dd{margin:0;font-family:var(--f-mono);font-size:13px;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.dlg .acts{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.dlg a,.dlg button{font:inherit;font-size:14px;padding:8px 14px;border-radius:9px;border:1px solid var(--line);background:none;color:var(--ink);text-decoration:none;cursor:pointer}
+.dlg button.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+footer{font-size:12.5px;color:var(--muted);max-width:75ch}
+footer a{color:var(--accent)}
+@media (max-width:640px){
+  .row,.hdr{grid-template-columns:32px minmax(0,1fr) 54px;gap:10px;padding:10px 12px}
+  .des,.con,.hdr .h-des,.hdr .h-con{display:none}
+  .dot{width:32px}
+  .nm small .sub{display:block}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>항성 이름 도감</h1>
+    <p>국제천문연맹(IAU)이 공식 승인한 고유 이름을 가진 별 목록입니다. 한글 표기, 명칭 유래, 별자리, 외계행성 이름까지 찾아보세요.</p>
+  </header>
+
+  <div class="sky" id="sky">
+    <canvas id="cv" width="1200" height="500" aria-label="적경·적위 전천 지도"></canvas>
+    <div class="cap">전천 지도 · 적경 24h → 0h · 적위 −90° ~ +90° · 점 크기는 겉보기 등급</div>
+    <div class="tip" id="tip" hidden></div>
+  </div>
+
+  <div class="controls">
+    <input type="search" id="q" placeholder="별·별자리 검색 (예: 시리우스, 오리온, Cassiopeia, 북두칠성)" aria-label="검색">
+    <select id="con" aria-label="별자리"><option value="">모든 별자리</option></select>
+    <div class="seg" role="group" aria-label="분류">
+      <button data-k="all" aria-pressed="true">전체</button>
+      <button data-k="t" aria-pressed="false">전통 이름</button>
+      <button data-k="e" aria-pressed="false">외계행성 모항성</button>
+      <button data-k="u" aria-pressed="false">비공식 이름</button>
+    </div>
+    <select id="org" aria-label="명칭 유래"><option value="">모든 유래</option></select>
+    <select id="sort" aria-label="정렬">
+      <option value="name">한글 이름순</option><option value="en">영문 이름순</option>
+      <option value="mag">밝은 순</option>
+      <option value="date">최근 승인순</option>
+    </select>
+  </div>
+  <div class="count" id="count"></div>
+
+  <div class="list" id="list" role="list"></div>
+  <button class="more" id="more" hidden>더 보기</button>
+
+  <footer>
+    데이터: <a href="https://librewiki.net/wiki/%EA%B3%A0%EC%9C%A0_%EC%9D%B4%EB%A6%84%EC%9D%B4_%EC%9E%88%EB%8A%94_%ED%95%AD%EC%84%B1_%EB%AA%A9%EB%A1%9D" target="_blank" rel="noopener">리브레위키 「고유 이름이 있는 항성 목록」</a>(한글 표기·명칭 유래·비고·외계행성 공모, CC BY-SA)과 IAU Working Group on Star Names의 <a href="https://www.iau.org/public/themes/naming_stars/" target="_blank" rel="noopener">IAU Catalog of Star Names</a>(좌표·등급·승인일, 2022-04-04판, CC BY). 연주시차·분광형은 <a href="https://github.com/astronexus/HYG-Database" target="_blank" rel="noopener">HYG/AT-HYG 성표</a>(Gaia DR3·Hipparcos, CC BY-SA)에서 가져왔고, 절대 등급은 겉보기 등급과 거리로 계산했으며, 유효 온도는 분광형에서 추정한 근삿값입니다. 2022년 공모 별과 일부 비공식 이름은 좌표가 없어 지도에 표시되지 않습니다. 등급은 V(존슨) 또는 G(가이아) 밴드입니다.
+  </footer>
+</div>
+
+<dialog id="dlg"><div class="dlg" id="dlgBody"></div></dialog>
+
+<script>
+// Name|Diacritics(if different)|Designation|ID|Con|mag|band|RA|Dec|Date
+const RAW=`Absolutno||XO-5||Lyn|11.95|G|116.72|39.09|2019-12-17
+Acamar||HR 897|θ1|Eri|2.88|V|44.57|-40.30|2016-07-20
+Achernar||HR 472|α|Eri|0.45|V|24.43|-57.24|2016-06-30
+Achird||HR 219|η|Cas|3.46|V|12.28|57.82|2017-09-05
+Acrab||HR 5984|β|Sco|2.56|V|241.36|-19.81|2016-08-21
+Acrux||HR 4730|α|Cru|1.33|V|186.65|-63.10|2016-07-20
+Acubens||HR 3572|α|Cnc|4.26|V|134.62|11.86|2016-07-20
+Adhafera||HR 4031|ζ|Leo|3.43|V|154.17|23.42|2016-07-20
+Adhara||HR 2618|ε|CMa|1.50|V|104.66|-28.97|2016-08-21
+Adhil||HR 390|ξ|And|4.87|V|20.59|45.53|2016-08-21
+Ain||HR 1409|ε|Tau|3.53|V|67.15|19.18|2015-12-15
+Ainalrami||HR 7116|ν1|Sgr|4.86|V|283.54|-22.74|2017-09-05
+Aladfar||HR 7298|η|Lyr|4.43|V|288.44|39.15|2017-09-05
+Alasia||HD 168746||Ser|7.95|V|275.46|-11.92|2019-12-17
+Albaldah||HR 7264|π|Sgr|2.88|V|287.44|-21.02|2017-09-05
+Albali||HR 7950|ε|Aqr|3.78|V|311.92|-9.50|2016-09-12
+Albireo||HR 7417|β|Cyg|3.37|V|292.68|27.96|2016-07-20
+Alchiba||HR 4623|α|Crv|4.02|V|182.10|-24.73|2016-09-12
+Alcor||HR 5062|80|UMa|3.99|V|201.31|54.99|2016-06-30
+Alcyone||HR 1165|η|Tau|2.85|V|56.87|24.11|2016-06-30
+Aldebaran||HR 1457|α|Tau|0.87|V|68.98|16.51|2016-06-30
+Alderamin||HR 8162|α|Cep|2.45|V|319.64|62.59|2016-07-20
+Aldhanab||HR 8353|γ|Gru|3.00|V|328.48|-37.36|2017-09-05
+Aldhibah||HR 6396|ζ|Dra|3.17|V|257.20|65.71|2017-09-05
+Aldulfin||HR 7852|ε|Del|4.03|V|308.30|11.30|2017-09-05
+Alfirk||HR 8238|β|Cep|3.23|V|322.16|70.56|2016-08-21
+Algedi||HR 7754|α2|Cap|3.58|V|304.51|-12.54|2016-08-21
+Algenib||HR 39|γ|Peg|2.83|V|3.31|15.18|2016-06-30
+Algieba||HR 4057|γ1|Leo|2.61|V|154.99|19.84|2016-07-20
+Algol||HR 936|β|Per|2.09|V|47.04|40.96|2016-06-30
+Algorab||HR 4757|δ|Crv|2.94|V|187.47|-16.52|2016-07-20
+Alhena||HR 2421|γ|Gem|1.93|V|99.43|16.40|2016-07-20
+Alioth||HR 4905|ε|UMa|1.76|V|193.51|55.96|2016-06-30
+Aljanah||HR 7949|ε|Cyg|2.48|V|311.55|33.97|2017-06-30
+Alkaid||HR 5191|η|UMa|1.85|V|206.89|49.31|2016-06-30
+Alkalurops||HR 5733|μ1|Boo|4.31|V|231.12|37.38|2016-08-21
+Alkaphrah||HR 3594|κ|UMa|4.16|V|135.91|47.16|2017-09-05
+Alkarab||HR 8905|υ|Peg|4.42|V|351.34|23.40|2017-09-05
+Alkes||HR 4287|α|Crt|4.08|V|164.94|-18.30|2016-09-12
+Almaaz||HR 1605|ε|Aur|3.03|V|75.49|43.82|2017-02-01
+Almach||HR 603|γ|And|2.10|V|30.97|42.33|2016-07-20
+Alnair||HR 8425|α|Gru|1.73|V|332.06|-46.96|2016-07-20
+Alnasl||HR 6746|γ2|Sgr|2.98|V|271.45|-30.42|2016-08-21
+Alnilam||HR 1903|ε|Ori|1.69|V|84.05|-1.20|2016-07-20
+Alnitak||HR 1948|ζ|Ori|1.74|V|85.19|-1.94|2016-07-20
+Alniyat||HR 6084|σ|Sco|2.90|V|245.30|-25.59|2017-02-01
+Alphard||HR 3748|α|Hya|1.99|V|141.90|-8.66|2016-07-20
+Alphecca||HR 5793|α|CrB|2.22|V|233.67|26.71|2016-07-20
+Alpheratz||HR 15|α|And|2.07|V|2.10|29.09|2016-06-30
+Alpherg||HR 437|η|Psc|3.83|V|22.87|15.35|2018-06-01
+Alrakis||HR 6370|μ|Dra|5.55|V|256.33|54.47|2017-02-01
+Alrescha||HR 596|α|Psc|3.82|V|30.51|2.76|2016-08-21
+Alruba||HR 6618||Dra|5.75|V|266.00|53.80|2018-06-01
+Alsafi||HR 7462|σ|Dra|4.67|V|293.09|69.66|2017-06-30
+Alsciaukat||HR 3275|31|Lyn|4.25|V|125.71|43.19|2017-06-30
+Alsephina||HR 3485|δ|Vel|1.99|V|131.18|-54.71|2017-09-05
+Alshain||HR 7602|β|Aql|3.71|V|298.83|6.41|2016-08-21
+Alshat||HR 7773|ν|Cap|4.77|V|305.17|-12.76|2017-06-30
+Altair||HR 7557|α|Aql|0.76|V|297.70|8.87|2016-06-30
+Altais||HR 7310|δ|Dra|3.07|V|288.14|67.66|2016-08-21
+Alterf||HR 3773|λ|Leo|4.32|V|142.93|22.97|2017-02-01
+Aludra||HR 2827|η|CMa|2.45|V|111.02|-29.30|2016-07-20
+Alula Australis||HR 4375|ξ|UMa|4.41|V|169.55|31.53|2016-07-20
+Alula Borealis||HR 4377|ν|UMa|3.49|V|169.62|33.09|2016-07-20
+Alya||HR 7141|θ1|Ser|4.62|V|284.05|4.20|2016-08-21
+Alzirr||HR 2484|ξ|Gem|3.35|V|101.32|12.90|2017-06-30
+Amadioha||HD 43197||CMa|8.98|V|93.40|-29.90|2019-12-17
+Amansinaya||WASP-34||Crt|10.30|V|165.40|-23.86|2019-12-17
+Anadolu||WASP-52||Peg|11.95|G|348.49|8.76|2019-12-17
+Ancha||HR 8499|θ|Aqr|4.17|V|334.21|-7.78|2016-09-12
+Angetenar||HR 850|τ2|Eri|4.76|V|42.76|-21.00|2017-06-30
+Aniara||HD 102956||UMa|7.86|V|177.84|57.64|2019-12-17
+Ankaa||HR 99|α|Phe|2.40|V|6.57|-42.31|2016-07-20
+Anser||HR 7405|α|Vul|4.44|V|292.18|24.66|2017-06-30
+Antares||HR 6134|α|Sco|1.06|V|247.35|-26.43|2016-06-30
+Arcalis|Arcalís|HD 131496||Boo|7.80|V|223.35|18.24|2019-12-17
+Arcturus||HR 5340|α|Boo|-0.05|V|213.92|19.18|2016-06-30
+Arkab Posterior||HR 7343|β2|Sgr|4.27|V|290.80|-44.80|2016-10-05
+Arkab Prior||HR 7337|β1|Sgr|3.96|V|290.66|-44.46|2016-10-05
+Arneb||HR 1865|α|Lep|2.58|V|83.18|-17.82|2016-07-20
+Ascella||HR 7194|ζ|Sgr|2.60|V|285.65|-29.88|2016-09-12
+Asellus Australis||HR 3461|δ|Cnc|3.94|V|131.17|18.15|2016-11-06
+Asellus Borealis||HR 3449|γ|Cnc|4.66|V|130.82|21.47|2016-11-06
+Ashlesha||HR 3482|ε|Hya|3.49|V|131.69|6.42|2018-06-01
+Aspidiske||HR 3699|ι|Car|2.21|V|139.27|-59.28|2016-07-20
+Asterope||HR 1151|21|Tau|5.76|V|56.48|24.55|2016-08-21
+Atakoraka||WASP-64||CMa|12.53|G|101.12|-32.86|2019-12-17
+Athebyne||HR 6132|η|Dra|2.73|V|246.00|61.51|2017-09-05
+Atik||HR 1131|ο|Per|3.84|V|56.08|32.29|2016-09-12
+Atlas||HR 1178|27|Tau|3.62|V|57.29|24.05|2016-08-21
+Atria||HR 6217|α|TrA|1.91|V|252.17|-69.03|2016-07-20
+Avior||HR 3307|ε|Car|1.86|V|125.63|-59.51|2016-07-20
+Axolotl|Axólotl|HD 224693||Cet|8.23|V|359.97|-22.43|2019-12-17
+Ayeyarwady||HD 18742||Eri|7.81|V|45.04|-20.80|2019-12-17
+Azelfafage||HR 8301|π1|Cyg|4.69|V|325.52|51.19|2016-09-12
+Azha||HR 874|η|Eri|3.89|V|44.11|-8.90|2016-09-12
+Azmidi||HR 3045|ξ|Pup|3.45|V|117.32|-24.86|2018-06-01
+Baekdu||HD 133086|8|UMi|6.83|V|224.20|74.90|2019-12-17
+Barnard's Star||GJ 699|V2500|Oph|9.54|V|269.45|4.67|2017-02-01
+Baten Kaitos||HR 539|ζ|Cet|3.74|V|27.87|-10.34|2016-09-12
+Beemim||HR 1393|υ3|Eri|3.97|V|66.01|-34.02|2017-06-30
+Beid||HR 1298|ο1|Eri|4.04|V|62.97|-6.84|2016-09-12
+Belel||HD 181342||Sgr|7.55|V|290.27|-23.62|2019-12-17
+Belenos|Bélénos|HD 8574||Psc|7.12|V|21.30|28.57|2019-12-17
+Bellatrix||HR 1790|γ|Ori|1.64|V|81.28|6.35|2016-06-30
+Berehynia||HAT-P-15||Per|11.72|G|66.25|39.46|2019-12-17
+Betelgeuse||HR 2061|α|Ori|0.45|V|88.79|7.41|2016-06-30
+Bharani||HR 838|41|Ari|3.61|V|42.50|27.26|2017-06-30
+Bibha|Bibhā|HD 86081||Sex|8.73|V|149.02|-3.81|2019-12-17
+Biham||HR 8450|θ|Peg|3.52|V|332.55|6.20|2016-08-21
+Bosona||HD 206610||Aqr|8.34|V|325.85|-7.41|2019-12-17
+Botein||HR 951|δ|Ari|4.35|V|47.91|19.73|2016-09-12
+Brachium||HR 5603|σ|Lib|3.25|V|226.02|-25.28|2017-09-05
+Bubup||HD 38283||Men|6.69|V|84.26|-73.70|2019-12-17
+Buna||HD 16175||And|7.28|V|39.26|42.06|2019-12-17
+Bunda||HR 8264|ξ|Aqr|4.80|V|324.44|-7.85|2018-06-01
+Canopus||HR 2326|α|Car|-0.62|V|95.99|-52.70|2016-06-30
+Capella||HR 1708|α|Aur|0.08|V|79.17|46.00|2016-06-30
+Caph||HR 21|β|Cas|2.28|V|2.29|59.15|2016-06-30
+Castor||HR 2891|α|Gem|1.98|V|113.65|31.89|2016-06-30
+Castula||HR 265|υ2|Cas|4.62|V|14.17|59.18|2017-09-05
+Cebalrai||HR 6603|β|Oph|2.76|V|265.87|4.57|2016-08-21
+Ceibo||HD 63454||Cha|9.37|V|114.84|-78.28|2019-12-17
+Celaeno||HR 1140|16|Tau|5.45|V|56.20|24.29|2016-08-21
+Cervantes||HR 6585|μ|Ara|5.15|V|266.04|-51.83|2015-12-15
+Chalawan||HR 4277|47|UMa|5.03|V|164.87|40.43|2015-12-15
+Chamukuy||HR 1412|θ2|Tau|3.73|V|67.17|15.87|2017-09-05
+Chaophraya||WASP-50||Eri|11.55|G|43.69|-10.90|2019-12-17
+Chara||HR 4785|β|CVn|4.24|V|188.44|41.36|2016-07-20
+Chason|Chasoň|HAT-P-5||Lyr|11.82|G|274.41|36.62|2019-12-17
+Chechia||HD 192699||Aql|6.44|V|304.03|4.58|2019-12-17
+Chertan||HR 4359|θ|Leo|3.33|V|168.56|15.43|2016-07-20
+Citadelle||HD 1502||Psc|8.36|V|4.82|14.05|2019-12-17
+Citala|Citalá|HD 52265||Mon|6.29|V|105.08|-5.37|2019-12-17
+Cocibolca||HD 4208||Scl|7.78|V|11.11|-26.52|2019-12-17
+Copernicus||HR 3522|55|Cnc|5.95|V|133.15|28.33|2015-12-15
+Cor Caroli||HR 4915|α2|CVn|2.89|V|194.01|38.32|2016-07-20
+Cujam||HR 6117|ω|Her|4.57|V|246.35|14.03|2017-02-01
+Cursa||HR 1666|β|Eri|2.78|V|76.96|-5.09|2016-07-20
+Dabih||HR 7776|β1|Cap|3.05|V|305.25|-14.78|2016-08-21
+Dalim||HR 963|α|For|3.86|V|48.02|-28.99|2017-09-05
+Deneb||HR 7924|α|Cyg|1.25|V|310.36|45.28|2016-06-30
+Deneb Algedi||HR 8322|δ|Cap|2.85|V|326.76|-16.13|2017-02-01
+Denebola||HR 4534|β|Leo|2.14|V|177.26|14.57|2016-06-30
+Diadem||HR 4968|α|Com|4.85|V|197.50|17.53|2017-02-01
+Dingolay||HD 96063||Leo|8.21|V|166.19|-2.51|2019-12-17
+Diphda||HR 188|β|Cet|2.04|V|10.90|-17.99|2016-08-21
+Diwo|Dìwö|WASP-17||Sco|11.38|G|239.96|-28.06|2019-12-17
+Diya||WASP-72||For|10.84|G|41.04|-30.17|2019-12-17
+Dofida||HD 117618||Cen|7.17|V|203.11|-47.27|2019-12-17
+Dombay||HAT-P-3||UMa|11.28|G|206.09|48.03|2019-12-17
+Dschubba||HR 5953|δ|Sco|2.29|V|240.08|-22.62|2016-08-21
+Dubhe||HR 4301|α|UMa|1.81|V|165.93|61.75|2016-06-30
+Dziban||HR 6636|ψ1|Dra|4.57|V|265.48|72.15|2017-09-05
+Ebla||HD 218566||Psc|8.59|V|347.29|-2.26|2019-12-17
+Edasich||HR 5744|ι|Dra|3.29|V|231.23|58.97|2015-12-15
+Electra||HR 1142|17|Tau|3.72|V|56.22|24.11|2016-08-21
+Elgafar||HR 5409|φ|Vir|4.84|V|217.05|-2.23|2018-06-01
+Elkurud||HR 2177|θ|Col|5.00|V|91.88|-37.25|2018-06-01
+Elnath||HR 1791|β|Tau|1.65|V|81.57|28.61|2016-07-20
+Eltanin||HR 6705|γ|Dra|2.24|V|269.15|51.49|2016-08-21
+Emiw||HD 7199||Tuc|8.06|V|17.70|-66.19|2019-12-17
+Enif||HR 8308|ε|Peg|2.38|V|326.05|9.88|2016-07-20
+Errai||HR 8974|γ|Cep|3.21|V|354.84|77.63|2015-12-15
+Fafnir||HR 6945|42|Dra|4.82|V|276.50|65.56|2015-12-15
+Fang||HR 5944|π|Sco|2.89|V|239.71|-26.11|2017-06-30
+Fawaris||HR 7528|δ|Cyg|2.90|V|296.24|45.13|2018-06-01
+Felis||HR 3923||Hya|4.94|V|148.72|-19.01|2018-06-01
+Felixvarela||BD-17 63||Cet|9.62|V|7.14|-16.23|2019-12-17
+Flegetonte||HD 102195||Vir|8.07|V|176.43|2.82|2019-12-17
+Fomalhaut||HR 8728|α|PsA|1.17|V|344.41|-29.62|2015-12-15
+Formosa||HD 100655||Leo|6.45|V|173.77|20.44|2019-12-17
+Franz||HAT-P-14||Her|9.86|V|260.12|38.24|2019-12-17
+Fulu||HR 153|ζ|Cas|3.69|V|9.24|53.90|2017-06-30
+Fumalsamakah||HR 8773|β|Psc|4.48|V|345.97|3.82|2018-06-01
+Funi||HD 109246||Dra|8.75|V|188.03|74.49|2019-12-17
+Furud||HR 2282|ζ|CMa|3.02|V|95.08|-30.06|2016-07-20
+Fuyue||HR 6630||Sco|3.19|V|267.46|-37.04|2017-06-30
+Gacrux||HR 4763|γ|Cru|1.59|V|187.79|-57.11|2016-07-20
+Gakyid||HD 73534||Cnc|8.23|V|129.82|12.96|2019-12-17
+Geminga||PSR B0633+17||Gem|||98.48|17.77|2022-04-04
+Giausar||HR 4434|λ|Dra|3.82|V|172.85|69.33|2017-02-01
+Gienah||HR 4662|γ|Crv|2.58|V|183.95|-17.54|2016-11-06
+Ginan||HR 4700|ε|Cru|3.59|V|185.34|-60.40|2017-11-17
+Gloas||WASP-13||Lyn|10.38|G|140.10|33.88|2019-12-17
+Gomeisa||HR 2845|β|CMi|2.89|V|111.79|8.29|2016-07-20
+Grumium||HR 6688|ξ|Dra|3.73|V|268.38|56.87|2016-09-12
+Gudja||HR 5879|κ|Ser|4.09|V|237.18|18.14|2018-08-10
+Gumala||HD 179949|V5652|Sgr|6.25|V|288.89|-24.18|2019-12-17
+Guniibuu||HR 6402|36|Oph|5.07|V|258.84|-26.60|2018-08-10
+Hadar||HR 5267|β|Cen|0.61|V|210.96|-60.37|2016-08-21
+Haedus||HR 1641|η|Aur|3.18|V|76.63|41.23|2017-06-30
+Hamal||HR 617|α|Ari|2.01|V|31.79|23.46|2016-07-20
+Hassaleh||HR 1577|ι|Aur|2.69|V|74.25|33.17|2017-06-30
+Hatysa||HR 1899|ι|Ori|2.80|V|83.86|-5.91|2017-09-05
+Helvetios||HR 8729|51|Peg|5.49|V|344.37|20.77|2015-12-15
+Heze||HR 5107|ζ|Vir|3.38|V|203.67|-0.60|2018-06-01
+Hoggar||HD 28678||Tau|8.38|V|67.86|4.58|2019-12-17
+Homam||HR 8634|ζ|Peg|3.41|V|340.37|10.83|2016-08-21
+Horna||HAT-P-38||Tri|12.30|G|35.38|32.25|2019-12-17
+Hunahpu|Hunahpú|HD 98219||Crt|8.05|V|169.45|-23.98|2019-12-17
+Hunor||HAT-P-2||Her|8.72|V|245.15|41.05|2019-12-17
+Iklil||HR 5928|ρ|Sco|3.87|V|239.22|-29.21|2017-09-05
+Illyrian||HD 82886||LMi|7.62|V|143.94|34.78|2019-12-17
+Imai||HR 4656|δ|Cru|2.75|V|183.79|-58.75|2018-08-10
+Inquill||HD 156411||Ara|6.67|V|259.96|-48.55|2019-12-17
+Intan||HD 20868||For|9.92|V|50.18|-33.73|2019-12-17
+Intercrus||HR 3743||UMa|5.41|V|142.17|45.60|2015-12-15
+Irena||WASP-38||Her|9.41|V|243.96|10.03|2019-12-17
+Itonda||HD 208487||Gru|7.47|V|329.33|-37.76|2019-12-17
+Izar||HR 5506|ε|Boo|2.35|V|221.25|27.07|2016-08-21
+Jabbah||HR 6027|ν|Sco|4.50|V|243.00|-19.46|2017-06-30
+Jishui||HR 2930|ο|Gem|4.89|V|114.79|34.58|2017-06-30
+Kaffaljidhma||HR 804|γ|Cet|3.56|V|40.83|3.24|2017-02-01
+Kalausi||HD 83443||Vel|8.23|V|144.30|-43.27|2019-12-17
+Kamuy||HD 145457||CrB|6.57|V|242.52|26.74|2019-12-17
+Kang||HR 5315|κ|Vir|4.18|V|213.22|-10.27|2017-06-30
+Karaka||HD 137388||Aps|8.71|V|233.92|-80.20|2019-12-17
+Kaus Australis||HR 6879|ε|Sgr|1.79|V|276.04|-34.38|2016-07-20
+Kaus Borealis||HR 6913|λ|Sgr|2.82|V|276.99|-25.42|2016-07-20
+Kaus Media||HR 6859|δ|Sgr|2.72|V|275.25|-29.83|2016-07-20
+Kaveh||HD 175541||Ser|8.02|V|283.92|4.27|2019-12-17
+Keid||HR 1325|ο2|Eri|4.43|V|63.82|-7.65|2016-09-12
+Khambalia||HR 5359|λ|Vir|4.52|V|214.78|-13.37|2017-09-05
+Kitalpha||HR 8131|α|Equ|3.92|V|318.96|5.25|2016-08-21
+Kochab||HR 5563|β|UMi|2.07|V|222.68|74.16|2016-07-20
+Koeia||HIP 12961||Eri|10.25|V|41.68|-23.09|2019-12-17
+Koit||XO-4||Lyn|10.78|G|110.39|58.27|2019-12-17
+Kornephoros||HR 6148|β|Her|2.78|V|247.55|21.49|2016-08-21
+Kraz||HR 4786|β|Crv|2.65|V|188.60|-23.40|2018-06-01
+Kurhah||HR 8417|ξ|Cep|4.26|V|330.95|64.63|2016-09-12
+La Superba||HR 4846|Y|CVn|5.42|V|191.28|45.44|2018-08-10
+Larawag||HR 6241|ε|Sco|2.29|V|252.54|-34.29|2017-11-17
+Lerna||HAT-P-42||Hya|12.00|G|135.34|6.10|2019-12-17
+Lesath||HR 6508|υ|Sco|2.70|V|262.69|-37.30|2016-08-21
+Libertas||HR 7595|ξ|Aql|4.71|V|298.56|8.46|2015-12-15
+Lich||PSR B1257+12||Vir|||195.01|12.68|2015-12-15
+Liesma||HD 118203||UMa|8.05|V|203.51|53.73|2019-12-17
+Lilii Borea||HR 824|39|Ari|4.52|V|41.98|29.25|2017-09-05
+Lionrock||HD 212771||Aqr|7.60|V|336.76|-17.26|2019-12-17
+Lucilinburhuc||HD 45350||Aur|7.89|V|97.19|38.96|2019-12-17
+Lusitania|Lusitânia|HD 45652||Mon|8.10|V|97.30|10.93|2019-12-17
+Maasym||HR 6526|λ|Her|4.41|V|262.68|26.11|2016-09-12
+Macondo||HD 93083||Ant|8.30|V|161.09|-33.58|2019-12-17
+Mago||HD 32518||Cam|6.43|V|77.40|69.64|2019-12-17
+Mahasim||HR 2095|θ|Aur|2.65|V|89.93|37.21|2017-06-30
+Mahsati||HD 152581||Oph|8.38|V|253.43|11.97|2019-12-17
+Maia||HR 1149|20|Tau|3.87|V|56.46|24.37|2016-07-20
+Malmok||WASP-39|V732|Vir|11.89|G|217.33|-3.44|2019-12-17
+Marfik||HR 6149|λ|Oph|3.82|V|247.73|1.98|2016-09-12
+Markab||HR 8781|α|Peg|2.49|V|346.19|15.21|2016-06-30
+Markeb||HR 3734|κ|Vel|2.47|V|140.53|-55.01|2017-09-05
+Marohu|Márohu|WASP-6||Aqr|11.98|G|348.16|-22.67|2019-12-17
+Marsic||HR 6008|κ|Her|5.00|V|242.02|17.05|2017-02-01
+Matar||HR 8650|η|Peg|2.93|V|340.75|30.22|2016-08-21
+Mazaalai||HAT-P-21||UMa|11.56|G|171.27|41.03|2020-03-01
+Mebsuta||HR 2473|ε|Gem|3.06|V|100.98|25.13|2016-07-20
+Megrez||HR 4660|δ|UMa|3.32|V|183.86|57.03|2016-06-30
+Meissa||HR 1879|λ|Ori|3.39|V|83.78|9.93|2016-07-20
+Mekbuda||HR 2650|ζ|Gem|4.01|V|106.03|20.57|2016-09-12
+Meleph||HR 3429|ε|Cnc|6.29|V|130.11|19.54|2017-09-05
+Menkalinan||HR 2088|β|Aur|1.90|V|89.88|44.95|2016-07-20
+Menkar||HR 911|α|Cet|2.54|V|45.57|4.09|2016-06-30
+Menkent||HR 5288|θ|Cen|2.06|V|211.67|-36.37|2016-08-21
+Menkib||HR 1228|ξ|Per|3.98|V|59.74|35.79|2016-09-12
+Merak||HR 4295|β|UMa|2.34|V|165.46|56.38|2016-06-30
+Merga||HR 5533|38|Boo|5.76|V|222.33|46.12|2016-09-12
+Meridiana||HR 7254|α|CrA|4.11|V|287.37|-37.90|2017-09-05
+Merope||HR 1156|23|Tau|4.14|V|56.58|23.95|2016-07-20
+Mesarthim||HR 546|γ2|Ari|4.75|V|28.38|19.29|2016-08-21
+Miaplacidus||HR 3685|β|Car|1.67|V|138.30|-69.72|2016-07-20
+Mimosa||HR 4853|β|Cru|1.25|V|191.93|-59.69|2016-07-20
+Minchir||HR 3418|σ|Hya|4.45|V|129.69|3.34|2017-09-05
+Minelauva||HR 4910|δ|Vir|3.39|V|193.90|3.40|2017-06-30
+Mintaka||HR 1852|δ|Ori|2.25|V|83.00|-0.30|2016-07-20
+Mira||HR 681|ο|Cet|6.47|V|34.84|-2.98|2016-06-30
+Mirach||HR 337|β|And|2.07|V|17.43|35.62|2016-06-30
+Miram||HR 834|η|Per|3.77|V|42.67|55.90|2017-09-05
+Mirfak||HR 1017|α|Per|1.79|V|51.08|49.86|2016-07-20
+Mirzam||HR 2294|β|CMa|1.98|V|95.67|-17.96|2016-07-20
+Misam||HR 941|κ|Per|3.79|V|47.37|44.86|2017-09-05
+Mizar||HR 5054|ζ|UMa|2.23|V|200.98|54.93|2016-06-30
+Moldoveanu||XO-1||CrB|11.28|V|240.55|28.17|2019-12-17
+Monch|Mönch|HD 130322||Vir|8.04|V|221.89|-0.28|2019-12-17
+Montuno||WASP-79||Eri|10.06|V|66.37|-30.60|2019-12-17
+Morava||WASP-60||Peg|12.18|V|356.67|31.16|2019-12-17
+Moriah||HAT-P-23||Del|12.17|G|306.12|16.76|2019-12-17
+Mothallah||HR 544|α|Tri|3.42|V|28.27|29.58|2016-08-21
+Mouhoun||HD 30856||Eri|7.91|V|72.57|-24.37|2019-12-17
+Mpingo||WASP-71||Cet|10.57|G|29.26|0.76|2019-12-17
+Muliphein||HR 2657|γ|CMa|4.11|V|105.94|-15.63|2016-08-21
+Muphrid||HR 5235|η|Boo|2.68|V|208.67|18.40|2016-09-12
+Muscida||HR 3323|ο|UMa|3.35|V|127.57|60.72|2016-07-20
+Musica||HR 8030|18|Del|5.48|V|314.61|10.84|2015-12-15
+Muspelheim||HAT-P-29||Per|11.73|G|33.13|51.78|2019-12-17
+Nahn||HR 3627|ξ|Cnc|5.70|V|137.34|22.05|2018-06-01
+Naledi||WASP-62||Dor|10.12|V|87.14|-63.99|2019-12-17
+Naos||HR 3165|ζ|Pup|2.21|V|120.90|-40.00|2016-08-21
+Nashira||HR 8278|γ|Cap|3.69|V|325.02|-16.66|2016-08-21
+Nasti|Násti|HD 68988||UMa|8.20|V|124.59|61.46|2019-12-17
+Natasha||HD 85390||Vel|8.54|V|147.51|-49.79|2019-12-17
+Nekkar||HR 5602|β|Boo|3.49|V|225.49|40.39|2016-08-21
+Nembus||HR 464|51|And|3.59|V|24.50|48.63|2017-09-05
+Nenque||HD 6434||Phe|7.72|V|16.17|-39.49|2019-12-17
+Nervia||HD 49674||Aur|8.10|V|102.88|40.87|2019-12-17
+Nganurganity||HR 2646|σ|CMa|3.49|V|105.43|-27.93|2017-09-05
+Nihal||HR 1829|β|Lep|2.83|V|82.06|-20.76|2016-07-20
+Nikawiy||HD 136418||Boo|7.88|V|229.78|41.73|2019-12-17
+Nosaxa||HD 48265||Pup|8.05|V|100.01|-48.54|2019-12-17
+Nunki||HR 7121|σ|Sgr|2.05|V|283.82|-26.30|2016-08-21
+Nusakan||HR 5747|β|CrB|3.90|V|231.96|29.11|2016-09-12
+Nushagak||HD 17156||Cas|8.17|V|42.44|71.75|2019-12-17
+Nyamien||WASP-15||Cen|10.80|G|208.93|-32.16|2019-12-17
+Ogma||HD 149026||Her|8.16|V|247.62|38.35|2015-12-15
+Okab||HR 7235|ζ|Aql|2.99|V|286.35|13.86|2018-06-01
+Paikauhale||HR 6165|τ|Sco|2.82|V|248.97|-28.22|2018-08-10
+Parumleo||WASP-32||Psc|11.41|G|3.96|1.20|2019-12-17
+Peacock||HR 7790|α|Pav|1.94|V|306.41|-56.74|2016-07-20
+Petra||WASP-80||Aql|11.27|G|303.17|-2.14|2019-12-17
+Phact||HR 1956|α|Col|2.65|V|84.91|-34.07|2016-07-20
+Phecda||HR 4554|γ|UMa|2.41|V|178.46|53.69|2016-07-20
+Pherkad||HR 5735|γ|UMi|3.00|V|230.18|71.83|2016-08-21
+Phoenicia||HD 192263|V1703|Aql|7.79|V|303.50|-0.87|2019-12-17
+Piautos||HR 3268|λ|Cnc|5.92|V|125.13|24.02|2018-06-01
+Pincoya||HD 164604||Sgr|9.66|V|270.78|-28.56|2019-12-17
+Pipirima||HR 6252|μ2|Sco|3.56|V|253.08|-38.02|2017-09-05
+Pipoltr||TrES-3|V1434|Her|12.20|G|268.03|37.55|2019-12-17
+Pleione||HR 1180|28|Tau|5.05|V|57.30|24.14|2016-06-30
+Poerava||HD 221287||Tuc|7.82|V|352.83|-58.21|2019-12-17
+Polaris||HR 424|α|UMi|2.13|V|37.95|89.26|2016-06-30
+Polaris Australis||HR 7228|σ|Oct|5.45|V|317.20|-88.96|2017-09-05
+Polis||HR 6812|μ|Sgr|3.84|V|273.44|-21.06|2017-09-05
+Pollux||HR 2990|β|Gem|1.16|V|116.33|28.03|2015-12-15
+Porrima||HR 4825|γ|Vir|3.44|V|190.42|-1.45|2016-07-20
+Praecipua||HR 4247|46|LMi|3.79|V|163.33|34.21|2017-06-30
+Prima Hyadum||HR 1346|γ|Tau|3.65|V|64.95|15.63|2017-09-05
+Procyon||HR 2943|α|CMi|0.40|V|114.83|5.22|2016-06-30
+Propus||HR 2216|η|Gem|3.32|V|93.72|22.51|2016-07-20
+Proxima Centauri||GJ 551|α|Cen|11.01|V|217.43|-62.68|2016-08-21
+Ran||HR 1084|ε|Eri|3.73|V|53.23|-9.46|2015-12-15
+Rana||HR 1136|δ|Eri|3.53|V|55.81|-9.76|2022-04-04
+Rapeto||HD 153950||Sco|7.39|V|256.13|-43.31|2019-12-17
+Rasalas||HR 3905|μ|Leo|3.88|V|148.19|26.01|2016-09-12
+Rasalgethi||HR 6406|α1|Her|3.37|V|258.66|14.39|2016-06-30
+Rasalhague||HR 6556|α|Oph|2.08|V|263.73|12.56|2016-07-20
+Rastaban||HR 6536|β|Dra|2.79|V|262.61|52.30|2016-08-21
+Regulus||HR 3982|α|Leo|1.36|V|152.09|11.97|2016-06-30
+Revati||HR 361|ζ|Psc|5.21|V|18.43|7.58|2017-06-30
+Rigel||HR 1713|β|Ori|0.18|V|78.63|-8.20|2016-06-30
+Rigil Kentaurus||HR 5459|α|Cen|-0.01|V|219.90|-60.83|2016-11-06
+Rosaliadecastro|Rosalíadecastro|HD 149143||Oph|7.89|V|248.21|2.08|2019-12-17
+Rotanev||HR 7882|β|Del|3.64|V|309.39|14.60|2016-09-12
+Ruchbah||HR 403|δ|Cas|2.66|V|21.45|60.24|2016-08-21
+Rukbat||HR 7348|α|Sgr|3.96|V|290.97|-40.62|2016-07-20
+Sabik||HR 6378|η|Oph|2.43|V|257.59|-15.72|2016-08-21
+Saclateni||HR 1612|ζ|Aur|3.69|V|75.62|41.08|2017-06-30
+Sadachbia||HR 8518|γ|Aqr|3.86|V|335.41|-1.39|2016-08-21
+Sadalbari||HR 8684|μ|Peg|3.51|V|342.50|24.60|2016-08-21
+Sadalmelik||HR 8414|α|Aqr|2.95|V|331.45|-0.32|2016-08-21
+Sadalsuud||HR 8232|β|Aqr|2.90|V|322.89|-5.57|2016-08-21
+Sadr||HR 7796|γ|Cyg|2.23|V|305.56|40.26|2016-08-21
+Sagarmatha||HD 100777||Leo|8.42|V|173.96|-4.76|2019-12-17
+Saiph||HR 2004|κ|Ori|2.07|V|86.94|-9.67|2016-07-20
+Salm||HR 8880|τ|Peg|4.58|V|350.16|23.74|2017-09-05
+Samaya|Sāmaya|HD 205739||PsA|8.56|V|324.54|-31.74|2019-12-17
+Sansuna||HAT-P-34||Sge|10.31|V|303.20|18.10|2019-12-17
+Sargas||HR 6553|θ|Sco|1.86|V|264.33|-43.00|2016-08-21
+Sarin||HR 6410|δ|Her|3.12|V|258.76|24.84|2016-09-12
+Sceptrum||HR 1481|53|Eri|4.02|V|69.55|-14.30|2017-06-30
+Scheat||HR 8775|β|Peg|2.44|V|345.94|28.08|2016-06-30
+Schedar||HR 168|α|Cas|2.24|V|10.13|56.54|2016-08-21
+Secunda Hyadum||HR 1373|δ1|Tau|3.78|V|65.73|17.54|2017-09-05
+Segin||HR 542|ε|Cas|3.35|V|28.60|63.67|2017-09-05
+Seginus||HR 5435|γ|Boo|3.04|V|218.02|38.31|2016-08-21
+Sham||HR 7479|α|Sge|4.39|V|295.02|18.01|2016-09-12
+Shama||HD 99109||Leo|9.10|V|171.07|-1.53|2019-12-17
+Sharjah||HIP 79431||Sco|11.34|V|243.17|-18.88|2019-12-17
+Shaula||HR 6527|λ|Sco|2.08|V|263.40|-37.10|2016-07-20
+Sheliak||HR 7106|β|Lyr|3.60|V|282.52|33.36|2016-08-21
+Sheratan||HR 553|β|Ari|2.70|V|28.66|20.81|2016-07-20
+Sika||HD 181720||Sgr|7.84|V|290.72|-32.92|2019-12-17
+Sirius||HR 2491|α|CMa|-1.45|V|101.29|-16.72|2016-06-30
+Situla||HR 8610|κ|Aqr|5.04|V|339.44|-4.23|2016-09-12
+Skat||HR 8709|δ|Aqr|3.27|V|343.66|-15.82|2016-08-21
+Solaris||BD+14 4559||Peg|9.78|V|318.40|14.69|2019-12-17
+Spica||HR 5056|α|Vir|0.98|V|201.30|-11.16|2016-06-30
+Sterrennacht||HAT-P-6||And|10.54|V|354.77|42.47|2019-12-17
+Stribor||HD 75898||Lyn|8.03|V|133.46|33.06|2019-12-17
+Sualocin||HR 7906|α|Del|3.86|V|309.91|15.91|2016-09-12
+Subra||HR 3852|ο|Leo|3.52|V|145.29|9.89|2016-09-12
+Suhail||HR 3634|λ|Vel|2.23|V|137.00|-43.43|2016-08-21
+Sulafat||HR 7178|γ|Lyr|3.25|V|284.74|32.69|2016-08-21
+Syrma||HR 5338|ι|Vir|4.07|V|214.00|-6.00|2016-09-12
+Tabit||HR 1543|π3|Ori|3.19|V|72.46|6.96|2017-09-05
+Taika||HAT-P-40||Lac|11.35|V|335.51|45.46|2019-12-17
+Taiyangshou||HR 4518|χ|UMa|3.69|V|176.51|47.78|2017-06-30
+Taiyi||HR 4916|8|Dra|5.23|V|193.87|65.44|2017-06-30
+Talitha||HR 3569|ι|UMa|3.12|V|134.80|48.04|2016-07-20
+Tangra||WASP-21||Peg|11.40|G|347.49|18.40|2019-12-17
+Tania Australis||HR 4069|μ|UMa|3.06|V|155.58|41.50|2016-07-20
+Tania Borealis||HR 4033|λ|UMa|3.45|V|154.27|42.91|2016-07-20
+Tapecue||HD 63765||Car|8.10|V|116.96|-54.26|2019-12-17
+Tarazed||HR 7525|γ|Aql|2.72|V|296.56|10.61|2016-08-21
+Tarf||HR 3249|β|Cnc|3.53|V|124.13|9.19|2018-06-01
+Taygeta||HR 1145|19|Tau|4.30|V|56.30|24.47|2016-08-21
+Tegmine||HR 3208|ζ1|Cnc|5.24|V|123.05|17.65|2016-09-12
+Tejat||HR 2286|μ|Gem|2.87|V|95.74|22.51|2017-02-01
+Terebellum||HR 7597|ω|Sgr|4.70|V|298.96|-26.30|2017-09-05
+Tevel||HAT-P-9||Aur|12.15|G|110.17|37.14|2019-12-17
+Theemin||HR 1464|υ2|Eri|3.81|V|68.89|-30.56|2017-02-01
+Thuban||HR 5291|α|Dra|3.67|V|211.10|64.38|2016-06-30
+Tiaki||HR 8636|β|Gru|2.12|V|340.67|-46.88|2017-09-05
+Tianguan||HR 1910|ζ|Tau|2.97|V|84.41|21.14|2017-06-30
+Tianyi||HR 4863|7|Dra|5.43|V|191.89|66.79|2017-06-30
+Timir||HD 148427||Oph|6.89|V|247.12|-13.40|2019-12-17
+Tislit||WASP-161||Pup|10.77|V|126.34|-11.50|2019-12-17
+Titawin||HR 458|υ|And|4.09|V|24.20|41.41|2015-12-15
+Tojil||WASP-22||Eri|11.58|G|52.82|-23.82|2019-12-17
+Toliman||HR 5460|α|Cen|1.35|V|219.90|-60.84|2018-08-10
+Tonatiuh||HR 4609||Cam|5.80|V|181.31|76.91|2015-12-15
+Torcular||HR 510|ο|Psc|4.29|V|26.35|9.16|2017-09-05
+Tuiren||HAT-P-36||CVn|12.09|G|188.27|44.92|2019-12-17
+Tupa|Tupã|HD 108147||Cru|6.99|V|186.44|-64.02|2019-12-17
+Tupi||HD 23079||Ret|7.12|V|54.93|-52.92|2019-12-17
+Tureis||HR 3185|ρ|Pup|2.83|V|121.89|-24.30|2016-09-12
+Ukdah||HR 3845|ι|Hya|3.90|V|144.96|-1.14|2018-06-01
+Uklun||HD 102117||Cen|7.47|V|176.21|-58.70|2019-12-17
+Unukalhai||HR 5854|α|Ser|2.63|V|236.07|6.43|2016-08-21
+Uruk||HD 231701||Sge|8.97|V|293.02|16.47|2019-12-17
+Vega||HR 7001|α|Lyr|0.03|V|279.23|38.78|2016-06-30
+Veritate||HR 8930|14|And|5.22|V|352.82|39.24|2015-12-15
+Vindemiatrix||HR 4932|ε|Vir|2.85|V|195.54|10.96|2016-07-20
+Wasat||HR 2777|δ|Gem|3.52|V|110.03|21.98|2016-08-21
+Wazn||HR 2040|β|Col|3.12|V|87.74|-35.77|2016-07-20
+Wezen||HR 2693|δ|CMa|1.83|V|107.10|-26.39|2016-07-20
+Wurren||HR 338|ζ|Phe|4.02|V|17.10|-55.25|2017-11-17
+Xamidimura||HR 6247|μ1|Sco|3.00|V|252.97|-38.05|2017-09-05
+Xihe||HD 173416||Lyr|6.04|V|280.90|36.56|2019-12-17
+Xuange||HR 5351|λ|Boo|4.18|V|214.10|46.09|2017-06-30
+Yed Posterior||HR 6075|ε|Oph|3.23|V|244.58|-4.69|2016-10-05
+Yed Prior||HR 6056|δ|Oph|2.73|V|243.59|-3.69|2016-10-05
+Yildun||HR 6789|δ|UMi|4.35|V|263.05|86.59|2016-08-21
+Zaniah||HR 4689|η|Vir|4.60|V|184.98|-0.67|2016-09-12
+Zaurak||HR 1231|γ|Eri|2.97|V|59.51|-13.51|2016-07-20
+Zavijava||HR 4540|β|Vir|3.59|V|177.67|1.76|2016-08-21
+Zhang||HR 3903|υ1|Hya|4.11|V|147.87|-14.85|2017-06-30
+Zibal||HR 984|ζ|Eri|4.80|V|48.96|-8.82|2016-09-12
+Zosma||HR 4357|δ|Leo|2.56|V|168.53|20.52|2016-07-20
+Zubenelgenubi||HR 5531|α2|Lib|2.75|V|222.72|-16.04|2016-08-21
+Zubenelhakrabi||HR 5787|γ|Lib|3.91|V|233.88|-14.79|2017-09-05
+Zubeneschamali||HR 5685|β|Lib|2.61|V|229.25|-9.38|2016-08-21`;
+
+const CON={And:"안드로메다자리",Ant:"공기펌프자리",Aps:"극락조자리",Aqr:"물병자리",Aql:"독수리자리",Ara:"제단자리",Ari:"양자리",Aur:"마차부자리",Boo:"목동자리",Cae:"조각칼자리",Cam:"기린자리",Cnc:"게자리",CVn:"사냥개자리",CMa:"큰개자리",CMi:"작은개자리",Cap:"염소자리",Car:"용골자리",Cas:"카시오페이아자리",Cen:"켄타우루스자리",Cep:"케페우스자리",Cet:"고래자리",Cha:"카멜레온자리",Cir:"컴퍼스자리",Col:"비둘기자리",Com:"머리털자리",CrA:"남쪽왕관자리",CrB:"북쪽왕관자리",Crv:"까마귀자리",Crt:"컵자리",Cru:"남십자자리",Cyg:"백조자리",Del:"돌고래자리",Dor:"황새치자리",Dra:"용자리",Equ:"조랑말자리",Eri:"에리다누스자리",For:"화로자리",Gem:"쌍둥이자리",Gru:"두루미자리",Her:"헤르쿨레스자리",Hor:"시계자리",Hya:"바다뱀자리",Hyi:"물뱀자리",Ind:"인디언자리",Lac:"도마뱀자리",Leo:"사자자리",LMi:"작은사자자리",Lep:"토끼자리",Lib:"천칭자리",Lup:"이리자리",Lyn:"살쾡이자리",Lyr:"거문고자리",Men:"테이블산자리",Mic:"현미경자리",Mon:"외뿔소자리",Mus:"파리자리",Nor:"직각자자리",Oct:"팔분의자리",Oph:"뱀주인자리",Ori:"오리온자리",Pav:"공작자리",Peg:"페가수스자리",Per:"페르세우스자리",Phe:"봉황새자리",Pic:"화가자리",Psc:"물고기자리",PsA:"남쪽물고기자리",Pup:"고물자리",Pyx:"나침반자리",Ret:"그물자리",Sge:"화살자리",Sgr:"궁수자리",Sco:"전갈자리",Scl:"조각가자리",Sct:"방패자리",Ser:"뱀자리",Sex:"육분의자리",Tau:"황소자리",Tel:"망원경자리",Tri:"삼각형자리",TrA:"남쪽삼각형자리",Tuc:"큰부리새자리",UMa:"큰곰자리",UMi:"작은곰자리",Vel:"돛자리",Vir:"처녀자리",Vol:"날치자리",Vul:"여우자리"};
+
+const KO={Sirius:"시리우스",Canopus:"카노푸스","Rigil Kentaurus":"리길 켄타우루스",Toliman:"톨리만","Proxima Centauri":"프록시마 센타우리",Arcturus:"아르크투루스",Vega:"베가 (직녀성)",Capella:"카펠라",Rigel:"리겔",Procyon:"프로키온",Achernar:"아케르나르",Betelgeuse:"베텔게우스",Hadar:"하다르",Altair:"알타이르 (견우성)",Acrux:"아크룩스",Aldebaran:"알데바란",Antares:"안타레스",Spica:"스피카",Pollux:"폴룩스",Fomalhaut:"포말하우트",Deneb:"데네브",Mimosa:"미모사",Regulus:"레굴루스",Adhara:"아다라",Castor:"카스토르",Gacrux:"가크룩스",Shaula:"샤울라",Bellatrix:"벨라트릭스",Elnath:"엘나트",Miaplacidus:"미아플라키두스",Alnilam:"알닐람",Alnair:"알나이르",Alnitak:"알니타크",Alioth:"알리오스",Dubhe:"두베",Mirfak:"미르파크",Wezen:"웨젠",Sargas:"사르가스","Kaus Australis":"카우스 아우스트랄리스",Avior:"아비오르",Alkaid:"알카이드",Menkalinan:"멘칼리난",Atria:"아트리아",Alhena:"알헤나",Peacock:"피콕",Alsephina:"알세피나",Mirzam:"미르잠",Alphard:"알파르드",Polaris:"폴라리스 (북극성)",Hamal:"하말",Algieba:"알기에바",Diphda:"디프다",Nunki:"눈키",Menkent:"멘켄트",Mirach:"미라크",Alpheratz:"알페라츠",Rasalhague:"라스알하게",Kochab:"코카브",Saiph:"사이프",Denebola:"데네볼라",Algol:"알골",Tiaki:"티아키",Muhlifain:"무흘리파인",Aspidiske:"아스피디스케",Suhail:"수하일",Alphecca:"알페카",Mintaka:"민타카",Sadr:"사드르",Eltanin:"엘타닌",Schedar:"셰다르",Naos:"나오스",Almach:"알마크",Caph:"카프",Izar:"이자르",Dschubba:"주바",Larawag:"라라와그",Merak:"메라크",Ankaa:"앙카",Enif:"에니프",Scheat:"셰아트",Sabik:"사비크",Phecda:"펙다",Aludra:"알루드라",Markeb:"마르케브",Navi:"나비",Markab:"마르카브",Aljanah:"알자나",Acrab:"아크라브",Mizar:"미자르",Alcor:"알코르",Megrez:"메그레즈",Thuban:"투반",Albireo:"알비레오",Mira:"미라",Alcyone:"알키오네",Maia:"마이아",Electra:"엘렉트라",Merope:"메로페",Taygeta:"타이게타",Celaeno:"켈라이노",Asterope:"아스테로페",Pleione:"플레이오네",Atlas:"아틀라스",Zubenelgenubi:"주벤엘게누비",Zubeneschamali:"주베네샤말리",Unukalhai:"우누크알하이",Rasalgethi:"라스알게티",Sheliak:"셸리악",Sulafat:"술라파트",Vindemiatrix:"빈데미아트릭스",Porrima:"포리마","Cor Caroli":"코르 카롤리",Algenib:"알게니브",Ruchbah:"루크바",Segin:"세긴",Alderamin:"알데라민",Errai:"에라이",Gomeisa:"고메이사",Furud:"푸루드",Arneb:"아르네브",Nihal:"니할",Phact:"파크트",Wazn:"와즌",Zosma:"조스마",Chertan:"케르탄",Lesath:"레사스",Ascella:"아스켈라",Kitalpha:"키탈파",Sadalmelik:"사달멜리크",Sadalsuud:"사달수드","Deneb Algedi":"데네브 알게디",Tarazed:"타라제드",Alshain:"알샤인",Rastaban:"라스타반",Meissa:"메이사",Hatysa:"하티사",Tabit:"타비트",Menkar:"멘카르",Sheratan:"셰라탄",Mesarthim:"메사르팀",Baekdu:"백두",Ran:"란","Barnard's Star":"바너드 별",Geminga:"게밍가",Lich:"리치",Copernicus:"코페르니쿠스",Helvetios:"헬베티오스",Libertas:"리베르타스",Kornephoros:"코르네포로스",Cebalrai:"케발라이",Yildun:"이일둔",Pherkad:"페르카드","Polaris Australis":"남극성 (폴라리스 아우스트랄리스)","La Superba":"라 수페르바",Fafnir:"파프니르",Diadem:"디아뎀",Mebsuta:"메브수타",Tejat:"테자트",Propus:"프로푸스",Wasat:"와사트",Mekbuda:"메크부다",Haedus:"하이두스",Almaaz:"알마즈",Hassaleh:"하살레",Mahasim:"마하심"};
+
+const LW={"Acamar":{"ko":"아카마르","o":"아랍","w":"에리다누스자리 θ"},"Achernar":{"ko":"아케르나르","o":"아랍","w":"에리다누스자리 α"},"Achird":{"ko":"아키르드","o":"(미상)","w":"카시오페이아자리 η A"},"Acrab":{"ko":"아크라브","o":"아랍","w":"전갈자리 β Aa"},"Acrux":{"ko":"아크룩스","o":"근대","w":"남십자자리 α Aa"},"Acubens":{"ko":"아쿠벤스","o":"아랍","w":"게자리 α Aa"},"Adhafera":{"ko":"아다페라","o":"아랍","w":"사자자리 ζ Aa"},"Adhara":{"ko":"아다라","o":"아랍","w":"큰개자리 ε A"},"Adhil":{"ko":"아드힐","o":"아랍","w":"안드로메다자리 ξ"},"Ain":{"ko":"아인","o":"아랍","nt":"외계행성 동반","w":"황소자리 ε Aa1","pl":"b: Amateru","ct":"일본","w2":"황소자리 ε"},"Ainalrami":{"ko":"아이날라미","o":"아랍","w":"궁수자리 ν1 A"},"Aladfar":{"ko":"알아드파르","o":"아랍","w":"거문고자리 η Aa"},"Albaldah":{"ko":"알발다흐","o":"아랍","w":"궁수자리 π A"},"Albali":{"ko":"알발리","o":"아랍","w":"물병자리 ε"},"Albireo":{"ko":"알비레오","o":"아랍","w":"백조자리 β Aa"},"Alchiba":{"ko":"알키바","o":"아랍","w":"까마귀자리 α"},"Alcor":{"ko":"알코르","o":"아랍","w":"큰곰자리 80 Ca"},"Alcyone":{"ko":"알키오네","o":"그리스","nt":"플레이아데스 성단","w":"황소자리 α A"},"Aldebaran":{"ko":"알데바란","o":"아랍","nt":"겨울의 대육각형","w":"황소자리 α"},"Alderamin":{"ko":"알데라민","o":"아랍","w":"세페우스자리 α"},"Aldhanab":{"ko":"알다나브","o":"아랍","w":"두루미자리 γ"},"Aldhibah":{"ko":"알디바흐","o":"아랍","w":"용자리 ζ A"},"Aldulfin":{"ko":"알둘핀","o":"아랍","w":"돌고래자리 ε"},"Alfirk":{"ko":"알피르크","o":"아랍","w":"세페우스자리 β Aa"},"Algedi":{"ko":"알게디","o":"아랍","w":"염소자리 α2 A"},"Algenib":{"ko":"알게니브","o":"아랍","nt":"가을의 대사각형","w":"페가수스자리 γ"},"Algieba":{"ko":"알기에바","o":"아랍","w":"사자자리 γ1"},"Algol":{"ko":"알골","o":"아랍","w":"페르세우스자리 β Aa1"},"Algorab":{"ko":"알고라브","o":"아랍","w":"까마귀자리 δ A"},"Alhena":{"ko":"알헤나","o":"아랍","nt":"다른 이름: Almeisan","w":"쌍둥이자리 γ Aa"},"Alioth":{"ko":"알리오스","o":"아랍","nt":"북두칠성","w":"큰곰자리 ε"},"Aljanah":{"ko":"알자나흐","o":"아랍","w":"백조자리 ε Aa"},"Alkaid":{"ko":"알카이드","o":"아랍","nt":"북두칠성","w":"큰곰자리 η"},"Alkalurops":{"ko":"알칼루롭스","o":"아랍","w":"목동자리 μ1 Aa"},"Alkaphrah":{"ko":"알카프라흐","o":"아랍","nt":"삼태성 / 다른 이름: Talitha Australis","w":"큰곰자리 κ A"},"Alkarab":{"ko":"알카라브","o":"아랍","w":"페가수스자리 υ"},"Alkes":{"ko":"알케스","o":"아랍","w":"컵자리 α"},"Almaaz":{"ko":"알마즈","o":"아랍","w":"마차부자리 ε"},"Almach":{"ko":"알마크","o":"아랍","w":"안드로메다자리 γ1"},"Alnair":{"ko":"알나이르","o":"아랍","w":"두루미자리 α"},"Alnasl":{"ko":"알나슬","o":"아랍","w":"궁수자리 γ2"},"Alnilam":{"ko":"알닐람","o":"아랍","nt":"오리온 벨트","w":"오리온자리 ε"},"Alnitak":{"ko":"알니탁","o":"아랍","nt":"오리온 벨트","w":"오리온자리 ζ Aa"},"Alniyat":{"ko":"알니얏","o":"아랍","w":"전갈자리 σ Aa1"},"Alphard":{"ko":"알파르드","o":"아랍","w":"바다뱀자리 α"},"Alphecca":{"ko":"알페카","o":"아랍","w":"북쪽왕관자리 α"},"Alpheratz":{"ko":"알페라츠","o":"아랍","nt":"가을의 대사각형","w":"안드로메다자리 α Aa"},"Alpherg":{"ko":"알페르그","o":"아랍","w":"물고기자리 η A"},"Alrakis":{"ko":"알라키스","o":"아랍","w":"용자리 μ A"},"Alrescha":{"ko":"알레샤","o":"아랍","w":"물고기자리 α A"},"Alruba":{"ko":"알루바","o":"아랍","w":"용자리 HD 161693"},"Alsafi":{"ko":"알사피","o":"아랍","w":"용자리 σ"},"Alsciaukat":{"ko":"알샤우캇","o":"아랍","w":"살쾡이자리 31"},"Alsephina":{"ko":"알세피나","o":"아랍","w":"돛자리 δ"},"Alshain":{"ko":"알샤인","o":"아랍","w":"독수리자리 β A"},"Alshat":{"ko":"알샷","o":"아랍","w":"염소자리 ν A"},"Altair":{"ko":"알타이르","o":"아랍","nt":"여름의 대삼각형","w":"독수리자리 α"},"Altais":{"ko":"알타이스","o":"아랍","w":"용자리 δ"},"Alterf":{"ko":"알테르프","o":"아랍","w":"사자자리 λ"},"Aludra":{"ko":"알우드라","o":"아랍","w":"큰개자리 η"},"Alula Australis":{"ko":"알울라 오스트랄리스","o":"아랍","nt":"삼태성(三台星)","w":"큰곰자리 ξ Aa"},"Alula Borealis":{"ko":"알울라 보레알리스","o":"아랍","nt":"삼태성(三台星)","w":"큰곰자리 ν"},"Alya":{"ko":"알야","o":"아랍","w":"뱀자리 θ A"},"Alzirr":{"ko":"알지르","o":"아랍","w":"쌍둥이자리 ξ"},"Ancha":{"ko":"안카","o":"아랍","w":"물병자리 θ"},"Angetenar":{"ko":"안게테나르","o":"아랍","w":"에리다누스자리 τ2"},"Ankaa":{"ko":"안카","o":"아랍","w":"봉황자리 α"},"Anser":{"ko":"안세르","o":"라틴","w":"여우자리 α"},"Antares":{"ko":"안타레스","o":"그리스","w":"전갈자리 α A"},"Arcturus":{"ko":"아크투루스","o":"그리스","nt":"봄의 대삼각형","w":"목동자리 α"},"Arkab Posterior":{"ko":"아르카브 포스테리오르","o":"아랍+라틴","w":"궁수자리 β2"},"Arkab Prior":{"ko":"아르카브 프리오르","o":"아랍+라틴","w":"궁수자리 β1"},"Arneb":{"ko":"아르네브","o":"아랍","w":"토끼자리 α A"},"Ascella":{"ko":"아셀라","o":"라틴","nt":"남두육성","w":"궁수자리 ζ A"},"Asellus Australis":{"ko":"아셀루스 오스트랄리스","o":"라틴","w":"게자리 δ Aa"},"Asellus Borealis":{"ko":"아셀루스 보레알리스","o":"라틴","w":"게자리 γ Aa"},"Ashlesha":{"ko":"아슐레샤","o":"인도","w":"바다뱀자리 ε A"},"Aspidiske":{"ko":"아스피디스케","o":"그리스","w":"용골자리 ι"},"Asterope":{"ko":"아스테로페","o":"그리스","nt":"플레이아데스 성단","w":"황소자리 21 A"},"Athebyne":{"ko":"아테바인","o":"아랍","w":"용자리 η A"},"Atik":{"ko":"아틱","o":"아랍","w":"페르세우스자리 ο A"},"Atlas":{"ko":"아틀라스","o":"그리스","nt":"플레이아데스 성단","w":"황소자리 27 Aa1"},"Atria":{"ko":"아트리아","o":"(미상)","w":"남쪽삼각형자리 α"},"Avior":{"ko":"아비오르","o":"근대","w":"용골자리 ε A"},"Azelfafage":{"ko":"아젤파파게","o":"아랍","w":"백조자리 π1"},"Azha":{"ko":"아즈하","o":"아랍","w":"에리다누스자리 η"},"Azmidi":{"ko":"아즈미디","o":"그리스","nt":"다른 이름: Asmidiske","w":"고물자리 ξ Aa"},"Barnard's Star":{"ko":"바너드 별","o":"근대","w":"뱀주인자리 GJ 699"},"Baten Kaitos":{"ko":"바텐 카이토스","o":"아랍","w":"고래자리 ζ Aa"},"Beemim":{"ko":"베밈","w":"에리다누스자리 υ3"},"Beid":{"ko":"베이드","o":"아랍","w":"에리다누스자리 ο1"},"Bellatrix":{"ko":"벨라트릭스","o":"라틴","w":"오리온자리 α Aa"},"Betelgeuse":{"ko":"베텔게우스","o":"아랍","nt":"겨울의 대삼각형","w":"오리온자리 α Aa"},"Bharani":{"ko":"바라니","o":"인도","w":"양자리 41 Aa"},"Biham":{"ko":"비함","o":"아랍","w":"페가수스자리 θ"},"Botein":{"ko":"보테인","o":"아랍","w":"양자리 δ"},"Brachium":{"ko":"브라키움","w":"천칭자리 σ A"},"Bunda":{"ko":"분다","w":"물병자리 ξ A"},"Canopus":{"ko":"카노푸스","o":"그리스","w":"용골자리 α A"},"Capella":{"ko":"카펠라","o":"라틴","nt":"겨울의 대육각형","w":"마차부자리 α Aa"},"Caph":{"ko":"카프","o":"아랍","w":"카시오페이아자리 β A"},"Castor":{"ko":"카스토르","o":"라틴","w":"쌍둥이자리 α Aa"},"Castula":{"ko":"카스툴라","w":"카시오페이아자리 υ2"},"Cebalrai":{"ko":"케발라이","o":"아랍","w":"뱀주인자리 β"},"Celaeno":{"ko":"켈라에노","o":"그리스","nt":"플레이아데스 성단","w":"황소자리 16"},"Chamukuy":{"ko":"차무쿠이","o":"유카텍 마야","nt":"히아데스 성단","w":"황소자리 θ2 Aa"},"Chara":{"ko":"카라","o":"그리스","w":"사냥개자리 β Aa"},"Chertan":{"ko":"체르탄","o":"아랍","w":"사자자리 θ"},"Cor Caroli":{"ko":"코르 카롤리","o":"근대","w":"사냥개자리 α2 Aa"},"Cujam":{"ko":"쿠잠","w":"헤르쿨레스자리 ω A"},"Cursa":{"ko":"쿠르사","o":"아랍","w":"에리다누스자리 β"},"Dabih":{"ko":"다비흐","o":"아랍","w":"염소자리 β1 Aa"},"Dalim":{"ko":"달림","w":"화로자리 α A"},"Deneb":{"ko":"데네브","o":"아랍","nt":"여름의 대삼각형","w":"백조자리 α"},"Deneb Algedi":{"ko":"데네브 알게디","o":"아랍","w":"염소자리 δ Aa"},"Denebola":{"ko":"데네볼라","o":"아랍","nt":"봄의 대삼각형","w":"사자자리 β"},"Diadem":{"ko":"디아뎀","o":"그리스","w":"머리털자리 α A"},"Diphda":{"ko":"디프다","o":"아랍","nt":"다른 이름: Deneb Kaitos","w":"고래자리 β"},"Dschubba":{"ko":"드슈바","o":"아랍","w":"전갈자리 δ A"},"Dubhe":{"ko":"두베","o":"아랍","nt":"북두칠성","w":"큰곰자리 α A"},"Dziban":{"ko":"지반","o":"아랍","w":"용자리 ψ1 A"},"Edasich":{"ko":"에다시크","o":"아랍","nt":"외계행성 동반","w":"용자리 ι","pl":"b: Hypatia","ct":"스페인","w2":"용자리 ι"},"Electra":{"ko":"엘렉트라","o":"그리스","nt":"플레이아데스 성단","w":"황소자리 17"},"Elgafar":{"ko":"엘가파르","o":"아랍","w":"처녀자리 φ A"},"Elkurud":{"ko":"엘쿠루드","o":"아랍","nt":"다른 이름: Alkurud","w":"비둘기자리 θ"},"Elnath":{"ko":"엘나스","o":"아랍","w":"황소자리 β"},"Eltanin":{"ko":"엘타닌","o":"아랍","w":"용자리 γ"},"Enif":{"ko":"에니프","o":"아랍","w":"페가수스자리 ε"},"Errai":{"ko":"에라이","o":"아랍","nt":"외계행성 동반","w":"세페우스자리 γ Aa","pl":"b: Tadmor","ct":"시리아","w2":"세페우스자리 γ"},"Fang":{"ko":"팡","o":"동아시아","w":"전갈자리 π Aa"},"Fawaris":{"ko":"파와리스","o":"아랍","w":"백조자리 δ A"},"Felis":{"ko":"펠리스","w":"바다뱀자리 HD 85951"},"Fomalhaut":{"ko":"포말하우트","o":"아랍","nt":"외계행성 동반","w":"남쪽물고기자리 α A","pl":"b: Dagon","ct":"미국","w2":"남쪽물고기자리 α"},"Fulu":{"ko":"풀루","o":"동아시아","w":"카시오페이아자리 ζ"},"Fumalsamakah":{"ko":"푸말사마카흐","o":"아랍","w":"물고기자리 β"},"Furud":{"ko":"푸루드","o":"아랍","w":"큰개자리 ζ Aa"},"Fuyue":{"ko":"푸웨","o":"동아시아","w":"전갈자리 G"},"Gacrux":{"ko":"가크룩스","o":"근대","w":"남십자자리 γ"},"Geminga":{"ko":"게밍가","o":"(미상)","w":"쌍둥이자리 PSR B0633+17"},"Giausar":{"ko":"기아우사르","w":"용자리 λ"},"Gienah":{"ko":"기에나흐","o":"아랍","w":"까마귀자리 γ A"},"Ginan":{"ko":"기난","o":"워더만","w":"남십자자리 ε"},"Gomeisa":{"ko":"고메이사","o":"아랍","w":"작은개자리 β A"},"Grumium":{"ko":"그루미움","o":"라틴","nt":"다른 이름: Genam","w":"용자리 ξ A"},"Gudja":{"ko":"구디아","o":"워더만","w":"뱀자리 κ"},"Guniibuu":{"ko":"구니부","w":"뱀주인자리 36 A"},"Hadar":{"ko":"하다르","o":"아랍","w":"센타우루스자리 β Aa"},"Haedus":{"ko":"하에두스","o":"라틴","w":"마차부자리 η"},"Hamal":{"ko":"하말","o":"아랍","w":"양자리 α"},"Hassaleh":{"ko":"하살레","o":"(미상)","w":"마차부자리 ι"},"Hatysa":{"ko":"하트샤","w":"오리온자리 ι"},"Heze":{"ko":"헤제","w":"처녀자리 ζ A"},"Homam":{"ko":"호맘","o":"아랍","w":"페가수스자리 ζ A"},"Iklil":{"ko":"이크릴","o":"아랍","w":"전갈자리 ρ Aa"},"Imai":{"ko":"이마이","o":"무르시","nt":"다른 이름: Decrux","w":"남십자자리 δ"},"Izar":{"ko":"이자르","o":"아랍","w":"목동자리 ε A"},"Jabbah":{"ko":"자바","o":"아랍","w":"전갈자리 ν Aa"},"Jishui":{"ko":"지수이","o":"동아시아","w":"쌍둥이자리 ο"},"Kaffaljidhma":{"ko":"카팔지드마","o":"아랍","w":"고래자리 γ A"},"Kang":{"ko":"캉","o":"동아시아","w":"처녀자리 κ"},"Kaus Australis":{"ko":"카우스 오스트랄리스","o":"아랍+라틴","w":"궁수자리 ε"},"Kaus Borealis":{"ko":"카우스 보레알리스","o":"아랍+라틴","nt":"남두육성","w":"궁수자리 λ"},"Kaus Media":{"ko":"카우스 메디아","o":"아랍+라틴","w":"궁수자리 δ"},"Keid":{"ko":"케이드","o":"아랍","w":"에리다누스자리 ο2 A"},"Khambalia":{"ko":"캄발리아","o":"콥트","w":"처녀자리 λ A"},"Kitalpha":{"ko":"키탈파","o":"아랍","w":"조랑말자리 α A"},"Kochab":{"ko":"코카브","o":"아랍","w":"작은곰자리 β"},"Kornephoros":{"ko":"코르네포로스","o":"그리스","w":"헤르쿨레스자리 β Aa"},"Kraz":{"ko":"크라즈","o":"(미상)","w":"까마귀자리 β"},"Kurhah":{"ko":"쿠르하","o":"아랍","w":"세페우스자리 ξ Aa"},"Larawag":{"ko":"라라와그","o":"워더만","nt":"다른 이름: Wei","w":"전갈자리 ε"},"La Superba":{"ko":"라 수페르바","o":"근대","w":"사냥개자리 Y"},"Lesath":{"ko":"레사스","o":"아랍","w":"전갈자리 υ"},"Lilii Borea":{"ko":"릴리 보레아","o":"근대","w":"양자리 39"},"Maasym":{"ko":"마심","o":"아랍","w":"헤르쿨레스자리 λ"},"Mahasim":{"ko":"마하심","o":"(미상)","w":"마차부자리 θ A"},"Maia":{"ko":"마이아","o":"그리스","nt":"플레이아데스 성단","w":"황소자리 20"},"Marfik":{"ko":"마르픽","o":"아랍","w":"뱀주인자리 λ A"},"Markab":{"ko":"마르카브","o":"아랍","nt":"가을의 대사각형","w":"페가수스자리 α"},"Markeb":{"ko":"마르케브","o":"아랍","w":"돛자리 κ"},"Marsic":{"ko":"마르식","o":"아랍","w":"헤르쿨레스자리 κ A"},"Matar":{"ko":"마타르","o":"아랍","w":"페가수스자리 η Aa"},"Mebsuta":{"ko":"멥수타","o":"아랍","w":"쌍둥이자리 ε"},"Megrez":{"ko":"메그레즈","o":"아랍","nt":"북두칠성","w":"큰곰자리 δ"},"Meissa":{"ko":"메이사","o":"아랍","w":"오리온자리 λ A"},"Mekbuda":{"ko":"멕부다","o":"아랍","w":"쌍둥이자리 ζ Aa"},"Meleph":{"ko":"멜레프","o":"아랍","w":"게자리 ε Aa"},"Menkalinan":{"ko":"멘칼리난","o":"아랍","w":"마차부자리 β Aa"},"Menkar":{"ko":"멘카르","o":"아랍","w":"고래자리 α"},"Menkent":{"ko":"멘켄트","o":"아랍","w":"센타우루스자리 θ"},"Menkib":{"ko":"멘키브","o":"아랍","w":"페르세우스자리 ξ"},"Merak":{"ko":"메라크","o":"아랍","w":"큰곰자리 β"},"Merga":{"ko":"메르가","o":"아랍","w":"목동자리 38"},"Meridiana":{"ko":"메리디아나","o":"라틴","nt":"다른 이름: Alphekka Meridiana","w":"남쪽왕관자리 α"},"Merope":{"ko":"메로페","o":"그리스","nt":"플레이아데스 성단","w":"황소자리 23 Aa"},"Mesarthim":{"ko":"메사르팀","o":"인도","w":"양자리 γ2 A"},"Miaplacidus":{"ko":"미아플라시두스","o":"근대","w":"용골자리 β"},"Mimosa":{"ko":"미모사","o":"라틴","nt":"다른 이름: Becrux","w":"남십자자리 β"},"Minchir":{"ko":"민키르","o":"아랍","w":"바다뱀자리 σ"},"Minelauva":{"ko":"미넬라우바","o":"아랍","w":"처녀자리 δ"},"Mintaka":{"ko":"민타카","o":"아랍","nt":"오리온 벨트","w":"오리온자리 δ Aa"},"Mira":{"ko":"미라","o":"근대","w":"고래자리 ο Aa"},"Mirach":{"ko":"미라크","o":"아랍","w":"안드로메다자리 β"},"Miram":{"ko":"미람","o":"(미상)","w":"페르세우스자리 η A"},"Mirfak":{"ko":"미르팍","o":"아랍","w":"페르세우스자리 α"},"Mirzam":{"ko":"미르잠","o":"아랍","w":"큰개자리 β"},"Misam":{"ko":"미삼","o":"아랍","w":"페르세우스자리 κ Aa"},"Mizar":{"ko":"미자르","o":"아랍","w":"큰곰자리 ζ Aa"},"Mothallah":{"ko":"모탈라","o":"아랍","w":"삼각형자리 α"},"Muliphein":{"ko":"물리페인","o":"아랍","w":"큰개자리 γ"},"Muphrid":{"ko":"무프리드","o":"아랍","w":"목동자리 η Aa"},"Muscida":{"ko":"무시다","w":"큰곰자리 ο A"},"Naos":{"ko":"나오스","o":"그리스","w":"고물자리 ζ"},"Nahn":{"ko":"나흔","w":"게자리 ξ A"},"Nashira":{"ko":"나시라","o":"아랍","w":"염소자리 γ A"},"Nekkar":{"ko":"네카르","o":"아랍","w":"목동자리 β"},"Nembus":{"ko":"넴부스","o":"(미상)","w":"안드로메다자리 51"},"Nihal":{"ko":"니할","o":"아랍","w":"토끼자리 β A"},"Nunki":{"ko":"눈키","o":"아시리아","nt":"남두육성","w":"궁수자리 σ Aa"},"Nusakan":{"ko":"누사칸","o":"아랍","w":"북쪽왕관자리 β A"},"Okab":{"ko":"오카브","o":"아랍","w":"독수리자리 ζ A"},"Paikauhale":{"ko":"파이카우할레","o":"하와이","w":"전갈자리 τ A"},"Peacock":{"ko":"피콕","o":"근대","w":"공작자리 α Aa"},"Phact":{"ko":"팍트","o":"아랍","w":"비둘기자리 α"},"Phecda":{"ko":"페크다","o":"아랍","nt":"북두칠성","w":"큰곰자리 γ"},"Pherkad":{"ko":"페르카드","o":"아랍","w":"작은곰자리 γ"},"Piautos":{"ko":"피아우토스","o":"콥트","w":"게자리 λ"},"Pipirima":{"ko":"피피리마","o":"타히티아","w":"전갈자리 μ2 A"},"Pleione":{"ko":"플레이오네","o":"그리스","nt":"플레이아데스 성단","w":"황소자리 28 Aa"},"Polaris":{"ko":"폴라리스","o":"라틴","nt":"북극성","w":"작은곰자리 α Aa"},"Polaris Australis":{"ko":"폴라리스 오스트랄리스","o":"근대","nt":"남극성","w":"팔분의자리 σ"},"Polis":{"ko":"폴리스","o":"콥트","nt":"남두육성","w":"궁수자리 μ1 Aa"},"Pollux":{"ko":"폴룩스","o":"그리스","nt":"겨울의 대육각형 , 외계행성 동반","w":"쌍둥이자리 β","pl":"b: Thestias","ct":"오스트레일리아","w2":"쌍둥이자리 β"},"Porrima":{"ko":"포리마","o":"로마","w":"처녀자리 γ A"},"Praecipua":{"ko":"프레시푸아","o":"라틴","w":"작은사자자리 46"},"Prima Hyadum":{"ko":"프리마 히아둠","o":"라틴","nt":"히아데스 성단","w":"황소자리 γ A"},"Procyon":{"ko":"프로키온","o":"그리스","nt":"겨울의 대삼각형 ·대육각형","w":"작은개자리 α A"},"Propus":{"ko":"프로푸스","o":"그리스","w":"쌍둥이자리 η A"},"Proxima Centauri":{"ko":"프록시마 센타우리","o":"근대","w":"센타우루스자리 α C GJ 551"},"Rana":{"ko":"라나","o":"(미상)","w":"에리다누스자리 δ"},"Rasalas":{"ko":"라스알라스","o":"아랍","w":"사자자리 μ"},"Rasalgethi":{"ko":"라스알게티","o":"아랍","w":"헤르쿨레스자리 α1 Aa"},"Rasalhague":{"ko":"라스알하게","o":"아랍","w":"뱀주인자리 α A"},"Rastaban":{"ko":"라스타반","o":"아랍","w":"용자리 β A"},"Regulus":{"ko":"레굴루스","o":"라틴","w":"사자자리 α A"},"Revati":{"ko":"레바티","o":"인도","w":"물고기자리 ζ A"},"Rigel":{"ko":"리겔","o":"아랍","nt":"겨울의 대육각형","w":"오리온자리 β A"},"Rigil Kentaurus":{"ko":"리길 켄타우로스","o":"아랍","w":"센타우루스자리 α A"},"Rotanev":{"ko":"로타네브","o":"근대","w":"돌고래자리 β A"},"Ruchbah":{"ko":"루크바","o":"아랍","w":"카시오페이아자리 δ Aa"},"Rukbat":{"ko":"루크밧","o":"아랍","w":"궁수자리 α"},"Sabik":{"ko":"사빅","o":"아랍","w":"뱀주인자리 η A"},"Saclateni":{"ko":"사클라테니","o":"아랍","w":"마차부자리 ζ A"},"Sadachbia":{"ko":"사다흐비아","o":"아랍","w":"물병자리 γ Aa"},"Sadalbari":{"ko":"사달바리","o":"아랍","w":"페가수스자리 μ"},"Sadalmelik":{"ko":"사달멜리크","o":"아랍","w":"물병자리 α A"},"Sadalsuud":{"ko":"사달수드","o":"아랍","w":"물병자리 β A"},"Sadr":{"ko":"사드르","o":"아랍","w":"백조자리 γ A"},"Saiph":{"ko":"사이프","o":"아랍","w":"오리온자리 κ"},"Salm":{"ko":"살름","w":"페가수스자리 τ"},"Sargas":{"ko":"사르가스","o":"수메르","w":"전갈자리 θ A"},"Sarin":{"ko":"사린","o":"(미상)","w":"헤르쿨레스자리 δ Aa"},"Sceptrum":{"ko":"셉트룸","o":"라틴","w":"에리다누스자리 53 A"},"Scheat":{"ko":"셰아트","o":"아랍","nt":"가을의 대사각형","w":"페가수스자리 β"},"Schedar":{"ko":"셰다르","o":"아랍","w":"카시오페이아자리 α"},"Secunda Hyadum":{"ko":"세쿤다 히아둠","o":"라틴","nt":"히아데스 성단","w":"황소자리 δ1 Aa"},"Segin":{"ko":"세긴","o":"(미상)","w":"카시오페이아자리 ε"},"Seginus":{"ko":"세기누스","o":"아랍","w":"목동자리 γ Aa"},"Sham":{"ko":"샴","o":"아랍","w":"화살자리 α"},"Shaula":{"ko":"샤울라","o":"아랍","w":"전갈자리 λ Aa"},"Sheliak":{"ko":"셸리악","o":"아랍","w":"거문고자리 β Aa1"},"Sheratan":{"ko":"셰라탄","o":"아랍","w":"양자리 β A"},"Sirius":{"ko":"시리우스","o":"그리스","nt":"겨울의 대삼각형 ·대육각형","w":"큰개자리 α A"},"Situla":{"ko":"시툴라","o":"라틴","w":"물병자리 κ A"},"Skat":{"ko":"스카트","o":"아랍","w":"물병자리 δ A"},"Spica":{"ko":"스피카","o":"아랍","nt":"봄의 대삼각형","w":"처녀자리 α Aa"},"Sualocin":{"ko":"수알로킨","o":"근대","w":"돌고래자리 α Aa"},"Subra":{"ko":"수브라","o":"아랍","w":"사자자리 ο Aa"},"Suhail":{"ko":"수하일","o":"아랍","w":"돛자리 λ"},"Sulafat":{"ko":"술라팟","o":"아랍","w":"거문고자리 γ"},"Syrma":{"ko":"시르마","o":"아랍","w":"처녀자리 ι"},"Tabit":{"ko":"타빗","o":"아랍","w":"오리온자리 π3"},"Taiyangshou":{"ko":"타이양서우","o":"동아시아","w":"큰곰자리 χ"},"Taiyi":{"ko":"타이이","o":"동아시아","w":"용자리 8"},"Talitha":{"ko":"탈리타","o":"아랍","nt":"삼태성 / 다른 이름: Talitha Borealis","w":"큰곰자리 ι Aa"},"Tania Australis":{"ko":"타니아 오스트랄리스","o":"아랍+라틴","nt":"삼태성(三台星)","w":"큰곰자리 μ A"},"Tania Borealis":{"ko":"타니아 보레알리스","o":"아랍+라틴","nt":"삼태성(三台星)","w":"큰곰자리 λ A"},"Tarazed":{"ko":"타라제드","o":"페르시아","w":"독수리자리 γ"},"Tarf":{"ko":"타르프","o":"아랍","nt":"다른 이름: Altarf","w":"게자리 β A"},"Taygeta":{"ko":"타이게타","o":"그리스","nt":"플레이아데스 성단","w":"황소자리 19 Aa"},"Tegmine":{"ko":"테그미네","o":"라틴","w":"게자리 ζ1 A"},"Tejat":{"ko":"테잣","o":"아랍","w":"쌍둥이자리 μ Aa"},"Terebellum":{"ko":"테레벨룸","o":"그리스","w":"궁수자리 ω A"},"Theemin":{"ko":"테민","w":"에리다누스자리 υ2"},"Thuban":{"ko":"투반","o":"아랍","w":"용자리 α A"},"Tiaki":{"ko":"티아키","o":"투아모투","w":"두루미자리 β"},"Tianguan":{"ko":"톈관","o":"동아시아","w":"황소자리 ζ A"},"Tianyi":{"ko":"톈이","o":"동아시아","w":"용자리 7"},"Toliman":{"ko":"톨리만","o":"아랍","w":"센타우루스자리 α B"},"Torcular":{"ko":"토르쿨라","w":"물고기자리 ο A"},"Tureis":{"ko":"투레이스","o":"아랍","w":"고물자리 ρ A"},"Ukdah":{"ko":"우크다","w":"바다뱀자리 ι"},"Unukalhai":{"ko":"우누칼하이","o":"아랍","nt":"다른 이름: Cor Serpentis","w":"뱀자리 α"},"Nganurganity":{"ko":"우너구나이트","o":"웨르가이아","nt":"리브레위키 표기: Unurgunite","w":"큰개자리 σ"},"Vega":{"ko":"베가","o":"아랍","nt":"여름의 대삼각형","w":"거문고자리 α"},"Vindemiatrix":{"ko":"빈데미아트릭스","o":"라틴","w":"처녀자리 ε"},"Wasat":{"ko":"와삿","o":"아랍","w":"쌍둥이자리 δ Aa"},"Wazn":{"ko":"와즌","o":"아랍","w":"비둘기자리 β"},"Wezen":{"ko":"웨젠","o":"아랍","w":"큰개자리 δ"},"Wurren":{"ko":"우렌","o":"워더만","w":"봉황자리 ζ Aa"},"Xamidimura":{"ko":"하미디무라","o":"나마","w":"전갈자리 μ1 Aa"},"Xuange":{"ko":"쉬안거","o":"동아시아","w":"목동자리 λ"},"Yed Posterior":{"ko":"예드 포스테리오르","o":"아랍+라틴","w":"뱀주인자리 ε"},"Yed Prior":{"ko":"예드 프리오르","o":"아랍+라틴","w":"뱀주인자리 δ"},"Yildun":{"ko":"일둔","o":"튀르키예","w":"작은곰자리 δ"},"Zaniah":{"ko":"자니아흐","o":"아랍","w":"처녀자리 η Aa"},"Zaurak":{"ko":"자우락","o":"아랍","w":"에리다누스자리 γ"},"Zavijava":{"ko":"자비야바","o":"아랍","w":"처녀자리 β"},"Zhang":{"ko":"장","o":"동아시아","w":"바다뱀자리 υ1 A"},"Zibal":{"ko":"지발","o":"아랍","w":"에리다누스자리 ζ Aa"},"Zosma":{"ko":"조스마","o":"아랍","w":"사자자리 δ"},"Zubenelgenubi":{"ko":"주벤엘게누비","o":"아랍","w":"천칭자리 α2 Aa"},"Zubenelhakrabi":{"ko":"주벤엘하크라비","o":"아랍","w":"천칭자리 γ A"},"Zubeneschamali":{"ko":"주벤에샤말리","o":"아랍","w":"천칭자리 β"},"Cervantes":{"pl":"b: Quijote c: Dulcinea d: Rocinante e: Sancho","ct":"스페인","w2":"제단자리 μ"},"Chalawan":{"pl":"b: Taphao Thong c: Taphao Kaew","ct":"태국","w2":"큰곰자리 47"},"Copernicus":{"pl":"b: Galileo c: Brahe d: Lipperhey e: Janssen f: Harriot","ct":"네덜란드","w2":"게자리 55"},"Fafnir":{"pl":"b: Orbitar","ct":"미국","w2":"용자리 42"},"Helvetios":{"pl":"b: Dimidium","ct":"스위스","w2":"페가수스자리 51"},"Intercrus":{"pl":"b: Arkas","ct":"일본","w2":"HD 81688"},"Libertas":{"pl":"b: Fortitudo","ct":"일본","w2":"독수리자리 ξ"},"Lich":{"pl":"b: Draugr c: Poltergeist d: Phobetor","ct":"이탈리아","w2":"PSR B1257+12"},"Musica":{"pl":"b: Arion","ct":"일본","w2":"돌고래자리 18"},"Ogma":{"pl":"b: Smertrios","ct":"프랑스","w2":"HD 149026"},"Ran":{"pl":"b: AEgir","ct":"미국","w2":"에리다누스자리 ε"},"Titawin":{"pl":"b: Saffar c: Samh d: Majriti","ct":"모로코","w2":"안드로메다자리 υ"},"Tonatiuh":{"pl":"b: Meztli","ct":"멕시코","w2":"HD 104985"},"Veritate":{"pl":"b: Spe","ct":"캐나다","w2":"안드로메다자리 14"},"Absolutno":{"pl":"Makropulos","ct":"체코"},"Alasia":{"pl":"Onasilos","ct":"키프로스"},"Amadioha":{"pl":"Equiano","ct":"나이지리아"},"Amansinaya":{"pl":"Haik","ct":"필리핀"},"Anadolu":{"pl":"Göktürk","ct":"튀르키예"},"Aniara":{"pl":"Isagel","ct":"스웨덴"},"Arcalis":{"pl":"Madriu","ct":"안도라"},"Atakoraka":{"pl":"Agouto","ct":"토고"},"Axolotl":{"pl":"Xólotl","ct":"멕시코"},"Ayeyarwady":{"pl":"Bagan","ct":"미얀마"},"Baekdu":{"pl":"Halla","ct":"대한민국"},"Belel":{"pl":"Dopere","ct":"세네갈"},"Belenos":{"pl":"Bélisama","ct":"프랑스"},"Berehynia":{"pl":"Tryzub","ct":"우크라이나"},"Bibha":{"pl":"Santamasa","ct":"인도"},"Bosona":{"pl":"Naron","ct":"보스니아 헤르체고비나"},"Bubup":{"pl":"Yanyan","ct":"오스트레일리아"},"Buna":{"pl":"Abol","ct":"에티오피아"},"Ceibo":{"pl":"Ibirapitá","ct":"우루과이"},"Chaophraya":{"pl":"Maeping","ct":"태국"},"Chason":{"pl":"Kráľomoc","ct":"슬로바키아"},"Chechia":{"pl":"Khomsa","ct":"튀니지"},"Citadelle":{"pl":"Indépendance","ct":"아이티"},"Citala":{"pl":"Cayahuanca","ct":"엘살바도르"},"Cocibolca":{"pl":"Xolotlan","ct":"니카라과"},"Dingolay":{"pl":"Ramajay","ct":"트리니다드 토바고"},"Diwo":{"pl":"Ditsö̀","ct":"코스타리카"},"Diya":{"pl":"Cuptor","ct":"모리셔스"},"Dofida":{"pl":"Noifasui","ct":"인도네시아"},"Dombay":{"pl":"Teberda","ct":"러시아"},"Ebla":{"pl":"Ugarit","ct":"시리아"},"Emiw":{"pl":"Hairu","ct":"모잠비크"},"Felixvarela":{"pl":"Finlay","ct":"쿠바"},"Flegetonte":{"pl":"Lete","ct":"이탈리아"},"Formosa":{"pl":"Sazum","ct":"대만"},"Franz":{"pl":"Sissi","ct":"오스트리아"},"Funi":{"pl":"Fold","ct":"아이슬란드"},"Gakyid":{"pl":"Drukyul","ct":"부탄"},"Gloas":{"pl":"Cruinlagh","ct":"영국"},"Gumala":{"pl":"Mastika","ct":"브루나이"},"Hoggar":{"pl":"Tassili","ct":"알제리"},"Horna":{"pl":"Hiisi","ct":"핀란드"},"Hunahpu":{"pl":"Ixbalanqué","ct":"온두라스"},"Hunor":{"pl":"Magor","ct":"헝가리"},"Illyrian":{"pl":"Arber","ct":"알바니아"},"Inquill":{"pl":"Sumajmajta","ct":"페루"},"Intan":{"pl":"Baiduri","ct":"말레이시아"},"Irena":{"pl":"Iztok","ct":"슬로베니아"},"Itonda":{"pl":"Mintome","ct":"가봉"},"Kalausi":{"pl":"Buru","ct":"케냐"},"Kamuy":{"pl":"Chura","ct":"일본"},"Karaka":{"pl":"Kererū","ct":"뉴질랜드"},"Kaveh":{"pl":"Kavian","ct":"이란"},"Koeia":{"pl":"Aumatex","ct":"푸에르토리코"},"Koit":{"pl":"Hämarik","ct":"에스토니아"},"Lerna":{"pl":"Iolaus","ct":"그리스"},"Liesma":{"pl":"Staburags","ct":"라트비아"},"Lionrock":{"pl":"Victoriapeak","ct":"홍콩"},"Lucilinburhuc":{"pl":"Peitruss","ct":"룩셈부르크"},"Lusitania":{"pl":"Viriato","ct":"포르투갈"},"Macondo":{"pl":"Melquíades","ct":"콜롬비아"},"Mago":{"pl":"Neri","ct":"독일"},"Mahsati":{"pl":"Ganja","ct":"아제르바이잔"},"Malmok":{"pl":"Bocaprins","ct":"아루바"},"Marohu":{"pl":"Boinayel","ct":"도미니카공화국"},"Mazaalai":{"pl":"Bambaruush","ct":"몽골"},"Moldoveanu":{"pl":"Negoiu","ct":"루마니아"},"Monch":{"pl":"Eiger","ct":"스위스"},"Montuno":{"pl":"Pollera","ct":"파나마"},"Morava":{"pl":"Vlasina","ct":"세르비아"},"Moriah":{"pl":"Jebus","ct":"팔레스타인"},"Mouhoun":{"pl":"Nakanbé","ct":"부르키나파소"},"Mpingo":{"pl":"Tanzanite","ct":"탄자니아"},"Muspelheim":{"pl":"Surt","ct":"덴마크"},"Naledi":{"pl":"Krotoa","ct":"남아프리카공화국"},"Nasti":{"pl":"Albmi","ct":"노르웨이"},"Natasha":{"pl":"Madalitso","ct":"잠비아"},"Nenque":{"pl":"Eyeke","ct":"에콰도르"},"Nervia":{"pl":"Eburonia","ct":"벨기에"},"Nikawiy":{"pl":"Awasis","ct":"캐나다"},"Nosaxa":{"pl":"Naqaỹa","ct":"아르헨티나"},"Nushagak":{"pl":"Mulchatna","ct":"미국"},"Nyamien":{"pl":"Asye","ct":"코트디부아르"},"Parumleo":{"pl":"Viculus","ct":"싱가포르"},"Petra":{"pl":"Wadirum","ct":"요르단"},"Phoenicia":{"pl":"Beirut","ct":"레바논"},"Pincoya":{"pl":"Caleuche","ct":"칠레"},"Pipoltr":{"pl":"Umbäässa","ct":"리히텐슈타인"},"Poerava":{"pl":"Pipitea","ct":"쿡 제도"},"Rapeto":{"pl":"Trimobe","ct":"마다가스카르"},"Rosaliadecastro":{"pl":"Riosar","ct":"스페인"},"Sagarmatha":{"pl":"Laligurans","ct":"네팔"},"Samaya":{"pl":"Samagiya","ct":"스리랑카"},"Sansuna":{"pl":"Ġgantija","ct":"말타"},"Shama":{"pl":"Perwana","ct":"파키스탄"},"Sharjah":{"pl":"Barajeel","ct":"아랍에미리트"},"Sika":{"pl":"Toge","ct":"가나"},"Solaris":{"pl":"Pirx","ct":"폴란드"},"Sterrennacht":{"pl":"Nachtwacht","ct":"네덜란드"},"Stribor":{"pl":"Veles","ct":"크로아티아"},"Taika":{"pl":"Vytis","ct":"리투아니아"},"Tangra":{"pl":"Bendida","ct":"불가리아"},"Tapecue":{"pl":"Yvaga","ct":"볼리비아"},"Tevel":{"pl":"Alef","ct":"이스라엘"},"Timir":{"pl":"Tondra","ct":"방글라데시"},"Tislit":{"pl":"Isli","ct":"모로코"},"Tojil":{"pl":"Koyopa'","ct":"과테말라"},"Tuiren":{"pl":"Bran","ct":"아일랜드"},"Tupa":{"pl":"Tumearandu","ct":"파라과이"},"Tupi":{"pl":"Guarani","ct":"브라질"},"Uklun":{"pl":"Leklsullun","ct":"핏케언 제도"},"Uruk":{"pl":"Babylonia","ct":"이라크"},"Xihe":{"pl":"Wangshu","ct":"중국"}};
+const LW_EXTRA=[{"n":"Ahadi","ko":"( 아하디 )","o":"아랍","nt":"","w":"고물자리 π","mag":"2.73","u":1},{"n":"Asellus Primus","ko":"( 아셀루스 프리무스 )","o":"라틴","nt":"","w":"목동자리 θ","mag":"4.05","u":1},{"n":"Asellus Secundus","ko":"( 아셀루스 세쿤두스 )","o":"라틴","nt":"","w":"목동자리 ι","mag":"2.38","u":1},{"n":"Asellus Tertius","ko":"( 아셀루스 테르티우스 )","o":"라틴","nt":"","w":"목동자리 κ","mag":"6.69","u":1},{"n":"Betria","ko":"( 베트리아 )","o":"","nt":"","w":"남쪽삼각형자리 β","mag":"2.85","u":1},{"n":"Double Double","ko":"( 더블더블 )","o":"기타","nt":"","w":"거문고자리 ε","mag":"4.59","u":1},{"n":"Girtab","ko":"( 기르타브 )","o":"","nt":"","w":"전갈자리 κ","mag":"2.39","u":1},{"n":"Graffias","ko":"( 그라피아스 )","o":"","nt":"","w":"전갈자리 ξ","mag":"4.17","u":1},{"n":"Han","ko":"( 한 )","o":"","nt":"","w":"뱀주인자리 ζ","mag":"2.57","u":1},{"n":"Herschel's Garnet Star","ko":"( 허셜 석류석 별 )","o":"근대","nt":"","w":"세페우스자리 μ","mag":"4.08","u":1},{"n":"Kapteyn's star","ko":"( 캅테인 별 )","o":"근대","nt":"","w":"화가자리 VZ","mag":"8.85","u":1},{"n":"Mulifain","ko":"( 물리파인 )","o":"아랍","nt":"","w":"센타우루스자리 γ","mag":"2.17","u":1},{"n":"Muliphen","ko":"( 물리펜 )","o":"아랍","nt":"","w":"뱀주인자리 γ","mag":"3.75","u":1},{"n":"Navi","ko":"( 나비 )","o":"기타","nt":"","w":"카시오페이아자리 γ","mag":"2.47","u":1},{"n":"Namalsadirah","ko":"( 나말사디라흐 )","o":"아랍","nt":"남두육성","w":"궁수자리 τ","mag":"3.33","u":1},{"n":"Namalsadirah","ko":"( 나말사디라흐 )","o":"아랍","nt":"남두육성","w":"궁수자리 φ","mag":"3.33","u":1},{"n":"Namalwarid","ko":"( 나말와리드 )","o":"아랍","nt":"","w":"궁수자리 η","mag":"3.11","u":1},{"n":"Regor","ko":"( 레고르 )","o":"기타","nt":"","w":"돛자리 γ","mag":"1.83","u":1},{"n":"Teegarden's star","ko":"( 티가든 별 )","o":"근대","nt":"","w":"양자리","mag":"15.2","u":1},{"n":"Orkaria","des":"GJ 1214","pl":"Enaiposha","ct":"케냐","x":2022},{"n":"Kaewkosin","des":"GJ 3470","pl":"Phailinsiam","ct":"태국","x":2022},{"n":"Añañuca","des":"GJ 367","pl":"Tahay","ct":"칠레","x":2022},{"n":"Noquisi","des":"GJ 436","pl":"Awohali","ct":"미국","x":2022},{"n":"Gar","des":"GJ 486","pl":"Su","ct":"스페인","x":2022},{"n":"Komondor","des":"HAT-P-12","pl":"Puli","ct":"헝가리","x":2022},{"n":"Guahayona","des":"HAT-P-26","pl":"Guataubá","ct":"푸에르토리코","x":2022},{"n":"Zembra","des":"HATS-72","pl":"Zembretta","ct":"튀니지","x":2022},{"n":"Aiolos","des":"HD 95086","pl":"Levantes","ct":"그리스","x":2022},{"n":"Matza","des":"HIP 65426","pl":"Najsakopajk","ct":"멕시코","x":2022},{"n":"Danfeng","des":"LHS 3844","pl":"Qingluan","ct":"중국","x":2022},{"n":"Batsũ̀","des":"LTT 9779","pl":"Kua'kua","ct":"코스타리카","x":2022},{"n":"Uúba","des":"L 168-9","pl":"Cuancoá","ct":"콜롬비아","x":2022},{"n":"Dilmun","des":"WASP-121","pl":"Tylos","ct":"바레인","x":2022},{"n":"Filetdor","des":"WASP-166","pl":"Catalineta","ct":"스페인","x":2022},{"n":"Wattle","des":"WASP-19","pl":"Banksia","ct":"오스트레일리아","x":2022},{"n":"Gnomon","des":"WASP-43","pl":"Astrolábos","ct":"루마니아","x":2022},{"n":"Kosjenka","des":"WASP-63","pl":"Regoč","ct":"크로아티아","x":2022},{"n":"Wouri","des":"WASP-69","pl":"Makombé","ct":"카메룬","x":2022},{"n":"Maru","des":"WD 0806-661","pl":"Ahra","ct":"대한민국","x":2022}];
+const PHYS={"Acamar":{"sp":"A4III+...","plx":19.9,"pc":50.2,"M":-0.63,"src":"Gaia DR3","T":8330,"Th":"분광형"},"Achernar":{"sp":"B3 VP","plx":23.39,"pc":42.8,"M":-2.7,"src":"Hipparcos","T":17000,"Th":"분광형"},"Achird":{"sp":"G0V SB","plx":168.83,"pc":5.92,"M":4.6,"src":"Gaia DR3","T":5920,"Th":"분광형"},"Acrab":{"sp":"B0.5V","plx":8.07,"pc":123.9,"M":-2.91,"src":"Hipparcos","T":28700,"Th":"분광형"},"Acrux":{"sp":"B0.5 IV","plx":10.13,"pc":98.7,"M":-3.64,"src":"Hipparcos","T":28700,"Th":"분광형"},"Acubens":{"sp":"AM","plx":18.33,"pc":54.6,"M":0.58,"src":"Gaia DR3","T":8080,"Th":"분광형"},"Adhafera":{"sp":"F0III","plx":14.04,"pc":71.2,"M":-0.83,"src":"Gaia DR3","T":7220,"Th":"분광형"},"Adhara":{"sp":"B2 II","plx":8.05,"pc":124.2,"M":-3.97,"src":"Hipparcos","T":20600,"Th":"분광형"},"Adhil":{"sp":"K0III-IV","plx":14.6,"pc":68.5,"M":0.69,"src":"Gaia DR3","T":4750,"Th":"분광형"},"Ain":{"sp":"K0III","plx":22.37,"pc":44.7,"M":0.28,"src":"Gaia DR3","T":4750,"Th":"분광형"},"Ainalrami":{"sp":"K1 II","plx":1.839,"pc":543.9,"M":-3.82,"src":"Gaia DR3","T":4600,"Th":"분광형"},"Aladfar":{"sp":"B2IV","plx":2.911,"pc":343.6,"M":-3.25,"src":"Gaia DR3","T":20600,"Th":"분광형"},"Alasia":{"sp":"G5 V","plx":23.99,"pc":41.7,"M":4.85,"src":"Gaia DR3","T":5660,"Th":"분광형"},"Albaldah":{"sp":"F2II/III","plx":6.241,"pc":160.2,"M":-3.14,"src":"Gaia DR3","T":6810,"Th":"분광형"},"Albali":{"sp":"A1 III","plx":13.36,"pc":74.8,"M":-0.59,"src":"Gaia DR3","T":9270,"Th":"분광형"},"Albireo":{"sp":"K0II+B9V","plx":8.982,"pc":111.3,"M":-1.86,"src":"Gaia DR3","T":4750,"Th":"분광형"},"Alchiba":{"sp":"F0IV/V","plx":66.77,"pc":15.0,"M":3.14,"src":"Gaia DR3","T":7220,"Th":"분광형"},"Alcor":{"sp":"A5V","plx":39.91,"pc":25.1,"M":2.0,"src":"Hipparcos","T":8080,"Th":"분광형"},"Alcyone":{"sp":"B7III","plx":8.09,"pc":123.6,"M":-2.61,"src":"Hipparcos","T":14000,"Th":"분광형"},"Aldebaran":{"sp":"K5III","plx":48.94,"pc":20.4,"M":-0.68,"src":"Hipparcos","T":3950,"Th":"분광형"},"Alderamin":{"sp":"A7IV-V","plx":66.5,"pc":15.0,"M":1.56,"src":"Hipparcos","T":7650,"Th":"분광형"},"Aldhanab":{"sp":"B8 III","plx":17.81,"pc":56.2,"M":-0.75,"src":"Gaia DR3","T":12300,"Th":"분광형"},"Aldhibah":{"sp":"B6III","plx":7.827,"pc":127.8,"M":-2.36,"src":"Gaia DR3","T":14500,"Th":"분광형"},"Aldulfin":{"sp":"B6III","plx":8.915,"pc":112.2,"M":-1.22,"src":"Gaia DR3","T":14500,"Th":"분광형"},"Alfirk":{"sp":"B2IIIv SB","plx":4.76,"pc":210.1,"M":-3.38,"src":"Hipparcos","T":20600,"Th":"분광형"},"Algedi":{"sp":"G6/G8III","plx":29.91,"pc":33.4,"M":0.96,"src":"Gaia DR3","T":4960,"Th":"분광형"},"Algenib":{"sp":"B2IV","plx":6.947,"pc":143.9,"M":-2.96,"src":"Gaia DR3","T":20600,"Th":"분광형"},"Algieba":{"sp":"K0P","plx":25.07,"pc":39.9,"M":-0.39,"src":"Hipparcos","T":4750,"Th":"분광형"},"Algol":{"sp":"B8V","plx":36.27,"pc":27.6,"M":-0.11,"src":"Hipparcos","T":12300,"Th":"분광형"},"Algorab":{"sp":"B9.5V","plx":38.06,"pc":26.3,"M":0.84,"src":"Gaia DR3","T":10200,"Th":"분광형"},"Alhena":{"sp":"A0IV","plx":29.84,"pc":33.5,"M":-0.7,"src":"Hipparcos","T":9700,"Th":"분광형"},"Alioth":{"sp":"A0P","plx":39.51,"pc":25.3,"M":-0.26,"src":"Hipparcos","T":9700,"Th":"분광형"},"Aljanah":{"sp":"K0III","plx":44.86,"pc":22.3,"M":0.74,"src":"Hipparcos","T":4750,"Th":"분광형"},"Alkaid":{"sp":"B3V","plx":31.38,"pc":31.9,"M":-0.67,"src":"Hipparcos","T":17000,"Th":"분광형"},"Alkalurops":{"sp":"F0V","plx":26.58,"pc":37.6,"M":1.43,"src":"Gaia DR3","T":7220,"Th":"분광형"},"Alkaphrah":{"sp":"A1Vn","plx":9.1,"pc":109.9,"M":-1.04,"src":"Hipparcos","T":9270,"Th":"분광형"},"Alkarab":{"sp":"F8III","plx":18.71,"pc":53.5,"M":0.78,"src":"Gaia DR3","T":6170,"Th":"분광형"},"Alkes":{"sp":"K1 III","plx":20.37,"pc":49.1,"M":0.62,"src":"Gaia DR3","T":4600,"Th":"분광형"},"Almaaz":{"sp":"F0Ia","plx":0.988,"pc":1012.3,"M":-7.0,"src":"Gaia DR3","T":7220,"Th":"분광형"},"Almach":{"sp":"B8V","plx":8.3,"pc":120.5,"M":-3.3,"src":"Hipparcos","T":12300,"Th":"분광형"},"Alnair":{"sp":"B7 IV","plx":32.29,"pc":31.0,"M":-0.72,"src":"Hipparcos","T":14000,"Th":"분광형"},"Alnasl":{"sp":"K0 III","plx":32.27,"pc":31.0,"M":0.52,"src":"Gaia DR3","T":4750,"Th":"분광형"},"Alnilam":{"sp":"B0 Ia","plx":1.65,"pc":606.1,"M":-7.22,"src":"Hipparcos","T":31400,"Th":"분광형"},"Alnitak":{"sp":"O9.5 Ib","plx":4.43,"pc":225.7,"M":-5.03,"src":"Hipparcos","T":31650,"Th":"분광형"},"Alniyat":{"sp":"B1 III","plx":4.68,"pc":213.7,"M":-3.75,"src":"Hipparcos","T":26000,"Th":"분광형"},"Alphard":{"sp":"K3 II-III","plx":18.09,"pc":55.3,"M":-1.72,"src":"Hipparcos","T":4300,"Th":"분광형"},"Alphecca":{"sp":"A0V","plx":42.24,"pc":23.7,"M":0.35,"src":"Gaia DR3","T":9700,"Th":"분광형"},"Alpheratz":{"sp":"B8P","plx":33.62,"pc":29.7,"M":-0.3,"src":"Hipparcos","T":12300,"Th":"분광형"},"Alpherg":{"sp":"G5II","plx":8.734,"pc":114.5,"M":-1.46,"src":"Gaia DR3","T":5010,"Th":"분광형"},"Alrakis":{"sp":"F 6 V","plx":36.79,"pc":27.2,"M":3.38,"src":"Gaia DR3","T":6400,"Th":"분광형"},"Alrescha":{"sp":"Ap (kA0hA7 SrII)","plx":21.66,"pc":46.2,"M":0.5,"src":"Hipparcos","T":8080,"Th":"분광형"},"Alruba":{"sp":"B 9 IV","plx":7.027,"pc":142.3,"M":-0.02,"src":"Gaia DR3","T":10700,"Th":"분광형"},"Alsafi":{"sp":"K0V","plx":173.49,"pc":5.76,"M":5.87,"src":"Gaia DR3","T":5280,"Th":"분광형"},"Alsciaukat":{"sp":"K5III","plx":8.883,"pc":112.6,"M":-1.01,"src":"Gaia DR3","T":3950,"Th":"분광형"},"Alsephina":{"sp":"A0 V","plx":40.49,"pc":24.7,"M":0.03,"src":"Hipparcos","T":9700,"Th":"분광형"},"Alshain":{"sp":"G8IV","plx":73.53,"pc":13.6,"M":3.04,"src":"Gaia DR3","T":5490,"Th":"분광형"},"Alshat":{"sp":"B9 IV","plx":12.17,"pc":82.1,"M":0.2,"src":"Gaia DR3","T":10700,"Th":"분광형"},"Altair":{"sp":"A1N","plx":194.95,"pc":5.13,"M":2.21,"src":"Hipparcos","T":9270,"Th":"분광형"},"Altais":{"sp":"G8III","plx":33.35,"pc":30.0,"M":0.69,"src":"Gaia DR3","T":4870,"Th":"분광형"},"Alterf":{"sp":"K5III","plx":8.755,"pc":114.2,"M":-0.97,"src":"Gaia DR3","T":3950,"Th":"분광형"},"Aludra":{"sp":"B5 IA","plx":1.64,"pc":609.8,"M":-6.48,"src":"Hipparcos","T":15700,"Th":"분광형"},"Alula Australis":{"sp":"G0V","plx":96.0,"pc":10.4,"M":4.32,"src":"Gliese","T":5920,"Th":"분광형"},"Alula Borealis":{"sp":"K3III","plx":7.982,"pc":125.3,"M":-2.0,"src":"Gaia DR3","T":4300,"Th":"분광형"},"Alya":{"sp":"A5 V","plx":24.27,"pc":41.2,"M":1.55,"src":"Gaia DR3","T":8080,"Th":"분광형"},"Alzirr":{"sp":"F3IV","plx":54.19,"pc":18.5,"M":2.02,"src":"Gaia DR3","T":6710,"Th":"분광형"},"Amadioha":{"sp":"G8/K0 IV/V","plx":16.02,"pc":62.4,"M":5.0,"src":"Gaia DR3","T":5490,"Th":"분광형"},"Ancha":{"sp":"K0 III","plx":17.09,"pc":58.5,"M":0.33,"src":"Gaia DR3","T":4750,"Th":"분광형"},"Angetenar":{"sp":"K0 III","plx":16.79,"pc":59.5,"M":0.89,"src":"Gaia DR3","T":4750,"Th":"분광형"},"Aniara":{"sp":"K 0 III","plx":8.169,"pc":122.4,"M":2.42,"src":"Gaia DR3","T":4750,"Th":"분광형"},"Ankaa":{"sp":"K0 IIIB","plx":38.5,"pc":26.0,"M":0.33,"src":"Hipparcos","T":4750,"Th":"분광형"},"Anser":{"sp":"M0+III","plx":11.22,"pc":89.1,"M":-0.31,"src":"Gaia DR3","T":3850,"Th":"분광형"},"Antares":{"sp":"M1.5 IAB","plx":5.89,"pc":169.8,"M":-5.09,"src":"Hipparcos","T":3660,"Th":"분광형"},"Arcalis":{"sp":"K0","plx":7.547,"pc":132.5,"M":2.19,"src":"Gaia DR3","T":4750,"Th":"분광형"},"Arcturus":{"sp":"K2IIIp","plx":88.83,"pc":11.3,"M":-0.31,"src":"Hipparcos","T":4450,"Th":"분광형"},"Arkab Posterior":{"sp":"F2/3 V","plx":23.36,"pc":42.8,"M":1.11,"src":"Gaia DR3","T":6810,"Th":"분광형"},"Arkab Prior":{"sp":"B8 V","plx":8.378,"pc":119.4,"M":-1.42,"src":"Gaia DR3","T":12300,"Th":"분광형"},"Arneb":{"sp":"F0Ib","plx":1.682,"pc":594.6,"M":-6.29,"src":"Gaia DR3","T":7220,"Th":"분광형"},"Ascella":{"sp":"A3IV","plx":36.98,"pc":27.0,"M":0.44,"src":"Hipparcos","T":8590,"Th":"분광형"},"Asellus Australis":{"sp":"K0III","plx":23.83,"pc":42.0,"M":0.83,"src":"Gaia DR3","T":4750,"Th":"분광형"},"Asellus Borealis":{"sp":"A1V","plx":18.64,"pc":53.6,"M":1.01,"src":"Gaia DR3","T":9270,"Th":"분광형"},"Ashlesha":{"sp":"G0III-IV","plx":25.23,"pc":39.6,"M":0.5,"src":"Hipparcos","T":5600,"Th":"분광형"},"Aspidiske":{"sp":"A8Ib","plx":4.26,"pc":234.7,"M":-4.64,"src":"Hipparcos","T":7510,"Th":"분광형"},"Asterope":{"sp":"B8V","plx":7.305,"pc":136.9,"M":0.08,"src":"Gaia DR3","T":12300,"Th":"분광형"},"Athebyne":{"sp":"G8III","plx":35.72,"pc":28.0,"M":0.49,"src":"Gaia DR3","T":4870,"Th":"분광형"},"Atik":{"sp":"B1II","plx":3.022,"pc":330.9,"M":-3.76,"src":"Gaia DR3","T":26000,"Th":"분광형"},"Atlas":{"sp":"B8III","plx":8.118,"pc":123.2,"M":-1.83,"src":"Gaia DR3","T":12300,"Th":"분광형"},"Atria":{"sp":"K2 II","plx":8.35,"pc":119.8,"M":-3.48,"src":"Hipparcos","T":4450,"Th":"분광형"},"Avior":{"sp":"K3: III + B2: V","plx":5.39,"pc":185.5,"M":-4.48,"src":"Hipparcos","T":4300,"Th":"분광형"},"Axolotl":{"sp":"G2 V","plx":10.58,"pc":94.5,"M":3.35,"src":"Gaia DR3","T":5770,"Th":"분광형"},"Ayeyarwady":{"sp":"G8/K0 IV","plx":6.186,"pc":161.7,"M":1.77,"src":"Gaia DR3","T":5490,"Th":"분광형"},"Azelfafage":{"sp":"B3V","plx":2.273,"pc":440.0,"M":-3.53,"src":"Gaia DR3","T":17000,"Th":"분광형"},"Azha":{"sp":"K1III-IV","plx":24.22,"pc":41.3,"M":0.81,"src":"Gaia DR3","T":4600,"Th":"분광형"},"Azmidi":{"sp":"G6 IA","plx":3.006,"pc":332.7,"M":-4.16,"src":"Gaia DR3","T":4960,"Th":"분광형"},"Baekdu":{"sp":"K0","plx":6.128,"pc":163.2,"M":0.77,"src":"Gaia DR3","T":4750,"Th":"분광형"},"Barnard's Star":{"sp":"sdM4","plx":546.99,"pc":1.83,"M":13.23,"src":"Gaia DR3","T":3210,"Th":"분광형"},"Baten Kaitos":{"sp":"K0 III","plx":12.88,"pc":77.7,"M":-0.71,"src":"Gaia DR3","T":4750,"Th":"분광형"},"Beemim":{"sp":"K4 III","plx":11.13,"pc":89.9,"M":-0.8,"src":"Gaia DR3","T":4100,"Th":"분광형"},"Beid":{"sp":"F1 IV","plx":26.11,"pc":38.3,"M":1.12,"src":"Gaia DR3","T":7020,"Th":"분광형"},"Belel":{"sp":"K0 III","plx":8.297,"pc":120.5,"M":2.14,"src":"Gaia DR3","T":4750,"Th":"분광형"},"Belenos":{"sp":"F8","plx":22.31,"pc":44.8,"M":3.86,"src":"Gaia DR3","T":6170,"Th":"분광형"},"Bellatrix":{"sp":"B2III","plx":12.92,"pc":77.4,"M":-2.8,"src":"Hipparcos","T":20600,"Th":"분광형"},"Betelgeuse":{"sp":"M2IA","plx":6.55,"pc":152.7,"M":-5.47,"src":"Hipparcos","T":3610,"Th":"분광형"},"Bharani":{"sp":"B8V","plx":19.69,"pc":50.8,"M":0.08,"src":"Hipparcos","T":12300,"Th":"분광형"},"Bibha":{"sp":"G1 V","plx":9.678,"pc":103.3,"M":3.66,"src":"Gaia DR3","T":5840,"Th":"분광형"},"Biham":{"sp":"A2V","plx":35.34,"pc":28.3,"M":1.26,"src":"Hipparcos","T":8840,"Th":"분광형"},"Bosona":{"sp":"K0 III","plx":6.764,"pc":147.8,"M":2.49,"src":"Gaia DR3","T":4750,"Th":"분광형"},"Botein":{"sp":"K2III","plx":19.77,"pc":50.6,"M":0.83,"src":"Gaia DR3","T":4450,"Th":"분광형"},"Brachium":{"sp":"M3/4 III","plx":12.54,"pc":79.8,"M":-1.26,"src":"Gaia DR3","T":3540,"Th":"분광형"},"Bubup":{"sp":"G0/1 V","plx":26.29,"pc":38.0,"M":3.79,"src":"Gaia DR3","T":5920,"Th":"분광형"},"Buna":{"sp":"G0","plx":16.67,"pc":60.0,"M":3.39,"src":"Gaia DR3","T":5920,"Th":"분광형"},"Bunda":{"sp":"K0 III","plx":18.23,"pc":54.8,"M":1.1,"src":"Gaia DR3","T":4750,"Th":"분광형"},"Canopus":{"sp":"F0 II","plx":10.55,"pc":94.8,"M":-5.5,"src":"Hipparcos","T":7220,"Th":"분광형"},"Capella":{"sp":"G0III","plx":76.2,"pc":13.1,"M":-0.51,"src":"Hipparcos","T":5600,"Th":"분광형"},"Caph":{"sp":"F2III-IV","plx":59.58,"pc":16.8,"M":1.16,"src":"Hipparcos","T":6810,"Th":"분광형"},"Castor":{"sp":"A1V","plx":64.12,"pc":15.6,"M":1.01,"src":"Hipparcos","T":9270,"Th":"분광형"},"Castula":{"sp":"G8III-IV","plx":16.65,"pc":60.1,"M":0.73,"src":"Gaia DR3","T":4870,"Th":"분광형"},"Cebalrai":{"sp":"K2 III","plx":39.23,"pc":25.5,"M":0.73,"src":"Gaia DR3","T":4450,"Th":"분광형"},"Ceibo":{"sp":"K4 V","plx":26.55,"pc":37.7,"M":6.49,"src":"Gaia DR3","T":4640,"Th":"분광형"},"Celaeno":{"sp":"B7IV","plx":7.385,"pc":135.4,"M":-0.21,"src":"Gaia DR3","T":14000,"Th":"분광형"},"Cervantes":{"sp":"G3 IV/V","plx":64.09,"pc":15.6,"M":4.18,"src":"Gaia DR3","T":5730,"Th":"분광형"},"Chalawan":{"sp":"G0V","plx":72.01,"pc":13.9,"M":4.32,"src":"Gaia DR3","T":5920,"Th":"분광형"},"Chamukuy":{"sp":"A7III","plx":21.81,"pc":45.8,"M":0.42,"src":"Gaia DR3","T":7650,"Th":"분광형"},"Chara":{"sp":"G0V","plx":118.03,"pc":8.47,"M":4.6,"src":"Gaia DR3","T":5920,"Th":"분광형"},"Chechia":{"sp":"G8 IV","plx":13.73,"pc":72.9,"M":2.13,"src":"Gaia DR3","T":5490,"Th":"분광형"},"Chertan":{"sp":"A0V","plx":20.32,"pc":49.2,"M":-0.13,"src":"Gaia DR3","T":9700,"Th":"분광형"},"Citadelle":{"sp":"K0","plx":5.202,"pc":192.2,"M":1.94,"src":"Gaia DR3","T":4750,"Th":"분광형"},"Citala":{"sp":"G0 V","plx":33.43,"pc":29.9,"M":3.91,"src":"Gaia DR3","T":5920,"Th":"분광형"},"Cocibolca":{"sp":"G5 V","plx":29.32,"pc":34.1,"M":5.12,"src":"Gaia DR3","T":5660,"Th":"분광형"},"Copernicus":{"sp":"G 8 V","plx":79.45,"pc":12.6,"M":5.45,"src":"Gaia DR3","T":5490,"Th":"분광형"},"Cor Caroli":{"sp":"A0spe...","plx":32.72,"pc":30.6,"M":0.46,"src":"Gaia DR3","T":9700,"Th":"분광형"},"Cujam":{"sp":"A0P","plx":13.1,"pc":76.3,"M":0.16,"src":"Gaia DR3","T":9700,"Th":"분광형"},"Cursa":{"sp":"A3IIIvar","plx":36.25,"pc":27.6,"M":0.58,"src":"Gaia DR3","T":8590,"Th":"분광형"},"Dabih":{"sp":"K0 :II: + A5:N","plx":8.397,"pc":119.1,"M":-2.33,"src":"Gaia DR3","T":4750,"Th":"분광형"},"Dalim":{"sp":"F8V","plx":71.43,"pc":14.0,"M":3.13,"src":"Gaia DR3","T":6170,"Th":"분광형"},"Deneb":{"sp":"A2I","plx":2.31,"pc":432.9,"M":-6.93,"src":"Hipparcos","T":8840,"Th":"분광형"},"Deneb Algedi":{"sp":"A5mF2 (IV)","plx":85.94,"pc":11.6,"M":2.52,"src":"Gaia DR3","T":8080,"Th":"분광형"},"Denebola":{"sp":"A3V","plx":90.91,"pc":11.0,"M":1.93,"src":"Hipparcos","T":8590,"Th":"분광형"},"Diadem":{"sp":"F5V","plx":56.1,"pc":17.8,"M":3.59,"src":"Hipparcos","T":6510,"Th":"분광형"},"Dingolay":{"sp":"G6 V","plx":7.179,"pc":139.3,"M":2.49,"src":"Gaia DR3","T":5600,"Th":"분광형"},"Diphda":{"sp":"K0III","plx":33.86,"pc":29.5,"M":-0.31,"src":"Hipparcos","T":4750,"Th":"분광형"},"Dofida":{"sp":"G2 V","plx":26.54,"pc":37.7,"M":4.29,"src":"Gaia DR3","T":5770,"Th":"분광형"},"Dschubba":{"sp":"B0.2IV","plx":6.64,"pc":150.6,"M":-3.6,"src":"Hipparcos","T":30320,"Th":"분광형"},"Dubhe":{"sp":"F7V comp","plx":26.54,"pc":37.7,"M":-1.07,"src":"Hipparcos","T":6280,"Th":"분광형"},"Dziban":{"sp":"F5IV-V","plx":43.95,"pc":22.8,"M":2.78,"src":"Gaia DR3","T":6510,"Th":"분광형"},"Ebla":{"sp":"K3 V","plx":34.7,"pc":28.8,"M":6.29,"src":"Gaia DR3","T":4830,"Th":"분광형"},"Edasich":{"sp":"K2III","plx":32.52,"pc":30.7,"M":0.85,"src":"Gaia DR3","T":4450,"Th":"분광형"},"Electra":{"sp":"B6III","plx":8.346,"pc":119.8,"M":-1.67,"src":"Gaia DR3","T":14500,"Th":"분광형"},"Elgafar":{"sp":"G3 V","plx":26.88,"pc":37.2,"M":1.99,"src":"Gaia DR3","T":5730,"Th":"분광형"},"Elkurud":{"sp":"B(8) IV","plx":4.173,"pc":239.6,"M":-1.9,"src":"Gaia DR3","T":15700,"Th":"분광형"},"Elnath":{"sp":"B7III","plx":24.36,"pc":41.1,"M":-1.42,"src":"Hipparcos","T":14000,"Th":"분광형"},"Eltanin":{"sp":"K5III","plx":21.14,"pc":47.3,"M":-1.13,"src":"Hipparcos","T":3950,"Th":"분광형"},"Emiw":{"sp":"K0 IV/V","plx":27.69,"pc":36.1,"M":5.27,"src":"Gaia DR3","T":5280,"Th":"분광형"},"Enif":{"sp":"K2Ibvar","plx":4.73,"pc":211.4,"M":-4.25,"src":"Hipparcos","T":4450,"Th":"분광형"},"Errai":{"sp":"K0IV","plx":72.52,"pc":13.8,"M":2.51,"src":"Gaia DR3","T":5280,"Th":"분광형"},"Fafnir":{"sp":"K2III","plx":11.06,"pc":90.4,"M":0.04,"src":"Gaia DR3","T":4450,"Th":"분광형"},"Fang":{"sp":"B1V + B2V","plx":9.673,"pc":103.4,"M":-2.18,"src":"Gaia DR3","T":26000,"Th":"분광형"},"Fawaris":{"sp":"B9.5III","plx":21.15,"pc":47.3,"M":-0.47,"src":"Gaia DR3","T":10200,"Th":"분광형"},"Felis":{"sp":"K5 III","plx":5.679,"pc":176.1,"M":-1.29,"src":"Gaia DR3","T":3950,"Th":"분광형"},"Felixvarela":{"sp":"K 5 V","plx":28.97,"pc":34.5,"M":6.93,"src":"Gaia DR3","T":4440,"Th":"분광형"},"Flegetonte":{"sp":"K0 V","plx":34.06,"pc":29.4,"M":5.73,"src":"Gaia DR3","T":5280,"Th":"분광형"},"Fomalhaut":{"sp":"A3 V","plx":129.81,"pc":7.7,"M":1.74,"src":"Hipparcos","T":8590,"Th":"분광형"},"Formosa":{"sp":"G9III","plx":7.235,"pc":138.2,"M":0.75,"src":"Gaia DR3","T":4810,"Th":"분광형"},"Fulu":{"sp":"B2IV","plx":6.666,"pc":150.0,"M":-2.19,"src":"Gaia DR3","T":20600,"Th":"분광형"},"Fumalsamakah":{"sp":"B7 IV/V","plx":8.054,"pc":124.2,"M":-0.99,"src":"Gaia DR3","T":14000,"Th":"분광형"},"Funi":{"sp":"G0","plx":14.72,"pc":67.9,"M":4.59,"src":"Gaia DR3","T":5920,"Th":"분광형"},"Furud":{"sp":"B2.5V","plx":9.492,"pc":105.3,"M":-2.09,"src":"Gaia DR3","T":18800,"Th":"분광형"},"Fuyue":{"sp":"K0/1 III","plx":24.73,"pc":40.4,"M":0.16,"src":"Gaia DR3","T":4750,"Th":"분광형"},"Gacrux":{"sp":"M4 III","plx":36.83,"pc":27.2,"M":-0.58,"src":"Hipparcos","T":3440,"Th":"분광형"},"Gakyid":{"sp":"G5","plx":11.96,"pc":83.6,"M":3.62,"src":"Gaia DR3","T":5660,"Th":"분광형"},"Giausar":{"sp":"M0III","plx":8.646,"pc":115.7,"M":-1.5,"src":"Gaia DR3","T":3850,"Th":"분광형"},"Gienah":{"sp":"B8III","plx":21.23,"pc":47.1,"M":-0.79,"src":"Hipparcos","T":12300,"Th":"분광형"},"Ginan":{"sp":"K3/4 III","plx":14.2,"pc":70.4,"M":-0.65,"src":"Gaia DR3","T":4300,"Th":"분광형"},"Gomeisa":{"sp":"B8Vvar","plx":20.17,"pc":49.6,"M":-0.59,"src":"Hipparcos","T":12300,"Th":"분광형"},"Grumium":{"sp":"K2III","plx":29.06,"pc":34.4,"M":1.05,"src":"Gaia DR3","T":4450,"Th":"분광형"},"Gudja":{"sp":"M 1- IIIAB","plx":8.523,"pc":117.3,"M":-1.26,"src":"Gaia DR3","T":3720,"Th":"분광형"},"Gumala":{"sp":"F8 V","plx":36.31,"pc":27.5,"M":4.05,"src":"Gaia DR3","T":6170,"Th":"분광형"},"Guniibuu":{"sp":"K2:III:","plx":168.0,"pc":5.95,"M":6.2,"src":"Gaia DR3","T":4450,"Th":"분광형"},"Hadar":{"sp":"B1 III","plx":8.32,"pc":120.2,"M":-4.79,"src":"Hipparcos","T":26000,"Th":"분광형"},"Haedus":{"sp":"B3V","plx":14.02,"pc":71.3,"M":-1.09,"src":"Gaia DR3","T":17000,"Th":"분광형"},"Hamal":{"sp":"K2III","plx":49.56,"pc":20.2,"M":0.49,"src":"Hipparcos","T":4450,"Th":"분광형"},"Hassaleh":{"sp":"K3II","plx":7.249,"pc":137.9,"M":-3.01,"src":"Gaia DR3","T":4300,"Th":"분광형"},"Hatysa":{"sp":"O9III","plx":1.997,"pc":500.8,"M":-5.7,"src":"Gaia DR3","T":31900,"Th":"분광형"},"Helvetios":{"sp":"G0","plx":64.4,"pc":15.5,"M":4.53,"src":"Gaia DR3","T":5920,"Th":"분광형"},"Heze":{"sp":"A3V","plx":43.75,"pc":22.9,"M":1.58,"src":"Gaia DR3","T":8590,"Th":"분광형"},"Hoggar":{"sp":"G8 IV","plx":5.368,"pc":186.3,"M":2.03,"src":"Gaia DR3","T":5490,"Th":"분광형"},"Homam":{"sp":"B8.5V","plx":15.96,"pc":62.7,"M":-0.57,"src":"Hipparcos","T":11500,"Th":"분광형"},"Hunahpu":{"sp":"K0 III/IV","plx":8.836,"pc":113.2,"M":2.78,"src":"Gaia DR3","T":4750,"Th":"분광형"},"Hunor":{"sp":"F8","plx":7.781,"pc":128.5,"M":3.18,"src":"Gaia DR3","T":6170,"Th":"분광형"},"Iklil":{"sp":"B2 IV/V","plx":7.322,"pc":136.6,"M":-1.81,"src":"Gaia DR3","T":20600,"Th":"분광형"},"Illyrian":{"sp":"G0","plx":7.895,"pc":126.7,"M":2.11,"src":"Gaia DR3","T":5600,"Th":"분광형"},"Imai":{"sp":"B2 IV","plx":7.168,"pc":139.5,"M":-2.97,"src":"Gaia DR3","T":20600,"Th":"분광형"},"Inquill":{"sp":"G1 V(W)","plx":17.97,"pc":55.7,"M":2.94,"src":"Gaia DR3","T":5840,"Th":"분광형"},"Intan":{"sp":"K3/4 III/V","plx":20.96,"pc":47.7,"M":6.53,"src":"Gaia DR3","T":4300,"Th":"분광형"},"Intercrus":{"sp":"K 0 III-IV","plx":11.82,"pc":84.6,"M":0.77,"src":"Gaia DR3","T":4750,"Th":"분광형"},"Itonda":{"sp":"G1/3 (V)","plx":22.27,"pc":44.9,"M":4.21,"src":"Gaia DR3","T":5840,"Th":"분광형"},"Izar":{"sp":"A0","plx":13.83,"pc":72.3,"M":-1.95,"src":"Gaia DR3","T":9700,"Th":"분광형"},"Jabbah":{"sp":"B2IV","plx":7.057,"pc":141.7,"M":-1.26,"src":"Gaia DR3","T":20600,"Th":"분광형"},"Jishui":{"sp":"F3III","plx":19.33,"pc":51.7,"M":1.32,"src":"Gaia DR3","T":6710,"Th":"분광형"},"Kaffaljidhma":{"sp":"A3V","plx":40.97,"pc":24.4,"M":1.62,"src":"Hipparcos","T":8590,"Th":"분광형"},"Kalausi":{"sp":"K0/1 V + G (III)","plx":24.48,"pc":40.9,"M":5.17,"src":"Gaia DR3","T":4750,"Th":"분광형"},"Kamuy":{"sp":"G9III","plx":7.387,"pc":135.4,"M":0.91,"src":"Gaia DR3","T":4810,"Th":"분광형"},"Kang":{"sp":"K2/3 III","plx":11.59,"pc":86.3,"M":-0.5,"src":"Gaia DR3","T":4450,"Th":"분광형"},"Karaka":{"sp":"K0/1 V","plx":24.62,"pc":40.6,"M":5.67,"src":"Gaia DR3","T":5280,"Th":"분광형"},"Kaus Australis":{"sp":"B9.5 III","plx":22.76,"pc":43.9,"M":-1.42,"src":"Hipparcos","T":10200,"Th":"분광형"},"Kaus Borealis":{"sp":"K1 IIIB","plx":42.92,"pc":23.3,"M":0.98,"src":"Gaia DR3","T":4600,"Th":"분광형"},"Kaus Media":{"sp":"K3 III","plx":7.847,"pc":127.4,"M":-2.81,"src":"Gaia DR3","T":4300,"Th":"분광형"},"Kaveh":{"sp":"G6/8 IV","plx":7.647,"pc":130.8,"M":2.44,"src":"Gaia DR3","T":5600,"Th":"분광형"},"Keid":{"sp":"K1V","plx":199.61,"pc":5.01,"M":5.93,"src":"Gaia DR3","T":5160,"Th":"분광형"},"Khambalia":{"sp":"A1 V","plx":18.42,"pc":54.3,"M":0.85,"src":"Gaia DR3","T":9270,"Th":"분광형"},"Kitalpha":{"sp":"G5 III + A5 V","plx":17.2,"pc":58.1,"M":0.1,"src":"Gaia DR3","T":5010,"Th":"분광형"},"Kochab":{"sp":"K4IIIvar","plx":24.91,"pc":40.1,"M":-0.95,"src":"Hipparcos","T":4100,"Th":"분광형"},"Koeia":{"sp":"M0","plx":42.69,"pc":23.4,"M":8.4,"src":"Gaia DR3","T":3850,"Th":"분광형"},"Kornephoros":{"sp":"G8III","plx":22.0,"pc":45.4,"M":-0.51,"src":"Gaia DR3","T":4870,"Th":"분광형"},"Kraz":{"sp":"G5II","plx":22.0,"pc":45.4,"M":-0.64,"src":"Gaia DR3","T":5010,"Th":"분광형"},"Kurhah":{"sp":"AM","plx":32.12,"pc":31.1,"M":1.79,"src":"Gaia DR3","T":8080,"Th":"분광형"},"La Superba":{"sp":"N","plx":3.222,"pc":310.3,"M":-2.04,"src":"Gaia DR3","T":2400,"Th":"색지수"},"Larawag":{"sp":"K2 IIIB","plx":51.19,"pc":19.5,"M":0.84,"src":"Hipparcos","T":4450,"Th":"분광형"},"Lesath":{"sp":"B2 IV","plx":5.66,"pc":176.7,"M":-3.54,"src":"Hipparcos","T":20600,"Th":"분광형"},"Libertas":{"sp":"K0III","plx":17.52,"pc":57.1,"M":0.93,"src":"Gaia DR3","T":4750,"Th":"분광형"},"Liesma":{"sp":"K0","plx":10.86,"pc":92.0,"M":3.23,"src":"Gaia DR3","T":5280,"Th":"분광형"},"Lilii Borea":{"sp":"K1III","plx":19.04,"pc":52.5,"M":0.92,"src":"Gaia DR3","T":4600,"Th":"분광형"},"Lionrock":{"sp":"G8 IV","plx":8.965,"pc":111.5,"M":2.36,"src":"Gaia DR3","T":5490,"Th":"분광형"},"Lucilinburhuc":{"sp":"G5","plx":21.29,"pc":47.0,"M":4.53,"src":"Gaia DR3","T":5660,"Th":"분광형"},"Lusitania":{"sp":"K5","plx":28.65,"pc":34.9,"M":5.39,"src":"Gaia DR3","T":4440,"Th":"분광형"},"Maasym":{"sp":"K3III","plx":8.294,"pc":120.6,"M":-1.0,"src":"Gaia DR3","T":4300,"Th":"분광형"},"Macondo":{"sp":"K3 V","plx":35.11,"pc":28.5,"M":6.03,"src":"Gaia DR3","T":4830,"Th":"분광형"},"Mago":{"sp":"K1III","plx":8.219,"pc":121.7,"M":1.0,"src":"Gaia DR3","T":4600,"Th":"분광형"},"Mahasim":{"sp":"A0p Si","plx":19.7,"pc":50.8,"M":-0.88,"src":"Hipparcos","T":9700,"Th":"분광형"},"Mahsati":{"sp":"K0","plx":6.08,"pc":164.5,"M":2.3,"src":"Gaia DR3","T":4750,"Th":"분광형"},"Maia":{"sp":"B7III","plx":7.671,"pc":130.4,"M":-1.71,"src":"Gaia DR3","T":14000,"Th":"분광형"},"Marfik":{"sp":"B9/A0 III","plx":18.84,"pc":53.1,"M":0.2,"src":"Hipparcos","T":10700,"Th":"분광형"},"Markab":{"sp":"B9.5III","plx":24.46,"pc":40.9,"M":-0.57,"src":"Hipparcos","T":10200,"Th":"분광형"},"Markeb":{"sp":"B2 IV/V","plx":5.7,"pc":175.4,"M":-3.75,"src":"Hipparcos","T":20600,"Th":"분광형"},"Marsic":{"sp":"G8III","plx":8.281,"pc":120.8,"M":-0.41,"src":"Gaia DR3","T":4870,"Th":"분광형"},"Matar":{"sp":"G2II-III","plx":16.63,"pc":60.1,"M":-0.97,"src":"Gaia DR3","T":5360,"Th":"분광형"},"Mebsuta":{"sp":"G8IB","plx":3.748,"pc":266.8,"M":-4.07,"src":"Gaia DR3","T":4870,"Th":"분광형"},"Megrez":{"sp":"A3Vvar","plx":40.33,"pc":24.8,"M":1.35,"src":"Gaia DR3","T":8590,"Th":"분광형"},"Meissa":{"sp":"O7.5(II)","plx":2.97,"pc":336.7,"M":-4.25,"src":"Hipparcos","T":35350,"Th":"분광형"},"Mekbuda":{"sp":"F7-G3IB","plx":3.073,"pc":325.4,"M":-3.55,"src":"Gaia DR3","T":6280,"Th":"분광형"},"Meleph":{"sp":"A6III","plx":5.384,"pc":185.7,"M":-0.05,"src":"Gaia DR3","T":7860,"Th":"분광형"},"Menkalinan":{"sp":"A2IV","plx":40.21,"pc":24.9,"M":-0.08,"src":"Hipparcos","T":8840,"Th":"분광형"},"Menkar":{"sp":"M2 III","plx":13.09,"pc":76.4,"M":-1.88,"src":"Hipparcos","T":3610,"Th":"분광형"},"Menkent":{"sp":"K0 IIIB","plx":55.45,"pc":18.0,"M":0.78,"src":"Hipparcos","T":4750,"Th":"분광형"},"Menkib":{"sp":"O7","plx":2.446,"pc":408.9,"M":-4.08,"src":"Gaia DR3","T":36500,"Th":"분광형"},"Merak":{"sp":"A0V","plx":38.6,"pc":25.9,"M":0.27,"src":"Gaia DR3","T":9700,"Th":"분광형"},"Merga":{"sp":"F 7 IVB W","plx":20.83,"pc":48.0,"M":2.35,"src":"Gaia DR3","T":6280,"Th":"분광형"},"Meridiana":{"sp":"A0/1 V","plx":27.09,"pc":36.9,"M":1.27,"src":"Gaia DR3","T":9700,"Th":"분광형"},"Merope":{"sp":"B6IV","plx":7.067,"pc":141.5,"M":-1.61,"src":"Gaia DR3","T":14500,"Th":"분광형"},"Mesarthim":{"sp":"A1p Si","plx":19.88,"pc":50.3,"M":1.24,"src":"Hipparcos","T":9270,"Th":"분광형"},"Miaplacidus":{"sp":"A1 III","plx":28.82,"pc":34.7,"M":-1.03,"src":"Hipparcos","T":9270,"Th":"분광형"},"Mimosa":{"sp":"B0.5 III","plx":11.71,"pc":85.4,"M":-3.41,"src":"Hipparcos","T":28700,"Th":"분광형"},"Minchir":{"sp":"K2 III","plx":8.689,"pc":115.1,"M":-0.86,"src":"Gaia DR3","T":4450,"Th":"분광형"},"Minelauva":{"sp":"M2 III","plx":17.41,"pc":57.4,"M":-0.41,"src":"Gaia DR3","T":3610,"Th":"분광형"},"Mintaka":{"sp":"O9.5 II","plx":4.71,"pc":212.3,"M":-4.38,"src":"Hipparcos","T":31650,"Th":"분광형"},"Mira":{"sp":"M5/6 IIIe","plx":10.91,"pc":91.7,"M":1.66,"src":"Hipparcos","T":3380,"Th":"분광형"},"Mirach":{"sp":"M0III","plx":16.52,"pc":60.5,"M":-1.84,"src":"Hipparcos","T":3850,"Th":"분광형"},"Miram":{"sp":"K3IB","plx":3.266,"pc":306.2,"M":-3.66,"src":"Gaia DR3","T":4300,"Th":"분광형"},"Mirfak":{"sp":"F5IB","plx":6.44,"pc":155.3,"M":-4.17,"src":"Hipparcos","T":6510,"Th":"분광형"},"Mirzam":{"sp":"B1 II/III","plx":6.62,"pc":151.1,"M":-3.92,"src":"Hipparcos","T":26000,"Th":"분광형"},"Misam":{"sp":"K0III","plx":28.73,"pc":34.8,"M":1.08,"src":"Gaia DR3","T":4750,"Th":"분광형"},"Mizar":{"sp":"A2V","plx":40.21,"pc":24.9,"M":0.25,"src":"Gaia DR3","T":8840,"Th":"분광형"},"Monch":{"sp":"K0 V","plx":31.34,"pc":31.9,"M":5.52,"src":"Gaia DR3","T":5280,"Th":"분광형"},"Mothallah":{"sp":"F5III","plx":51.5,"pc":19.4,"M":1.98,"src":"Hipparcos","T":6510,"Th":"분광형"},"Mouhoun":{"sp":"K0 III","plx":7.596,"pc":131.6,"M":2.31,"src":"Gaia DR3","T":4750,"Th":"분광형"},"Muliphein":{"sp":"B8 II","plx":7.582,"pc":131.9,"M":-1.49,"src":"Gaia DR3","T":12300,"Th":"분광형"},"Muphrid":{"sp":"G0IV","plx":87.75,"pc":11.4,"M":2.4,"src":"Hipparcos","T":5920,"Th":"분광형"},"Muscida":{"sp":"G4II-III","plx":17.93,"pc":55.8,"M":-0.38,"src":"Gaia DR3","T":5130,"Th":"분광형"},"Musica":{"sp":"K0","plx":13.3,"pc":75.2,"M":1.1,"src":"Gaia DR3","T":4750,"Th":"분광형"},"Nahn":{"sp":"K0III","plx":8.004,"pc":124.9,"M":0.22,"src":"Gaia DR3","T":4750,"Th":"분광형"},"Naos":{"sp":"O5 IAF","plx":3.01,"pc":332.2,"M":-5.4,"src":"Hipparcos","T":41400,"Th":"분광형"},"Nashira":{"sp":"A7III:mp...","plx":19.1,"pc":52.3,"M":0.1,"src":"Gaia DR3","T":7650,"Th":"분광형"},"Nasti":{"sp":"G0","plx":16.56,"pc":60.4,"M":4.3,"src":"Gaia DR3","T":5920,"Th":"분광형"},"Natasha":{"sp":"K1 V","plx":29.83,"pc":33.5,"M":5.91,"src":"Gaia DR3","T":5160,"Th":"분광형"},"Nekkar":{"sp":"G8II-III","plx":13.88,"pc":72.1,"M":-0.8,"src":"Gaia DR3","T":4870,"Th":"분광형"},"Nembus":{"sp":"K3III","plx":18.55,"pc":53.9,"M":-0.07,"src":"Gaia DR3","T":4300,"Th":"분광형"},"Nenque":{"sp":"G2/3 V","plx":23.67,"pc":42.3,"M":4.59,"src":"Gaia DR3","T":5770,"Th":"분광형"},"Nervia":{"sp":"G0","plx":23.32,"pc":42.9,"M":4.94,"src":"Gaia DR3","T":5920,"Th":"분광형"},"Nganurganity":{"sp":"K4 III","plx":2.509,"pc":398.6,"M":-4.51,"src":"Gaia DR3","T":4100,"Th":"분광형"},"Nihal":{"sp":"G5II","plx":20.87,"pc":47.9,"M":-0.57,"src":"Gaia DR3","T":5010,"Th":"분광형"},"Nikawiy":{"sp":"G5","plx":9.525,"pc":105.0,"M":2.77,"src":"Gaia DR3","T":5660,"Th":"분광형"},"Nosaxa":{"sp":"G5 IV/V","plx":11.01,"pc":90.9,"M":3.26,"src":"Gaia DR3","T":5660,"Th":"분광형"},"Nunki":{"sp":"B2.5 V","plx":14.32,"pc":69.8,"M":-2.17,"src":"Hipparcos","T":18800,"Th":"분광형"},"Nusakan":{"sp":"A8III","plx":27.93,"pc":35.8,"M":1.13,"src":"Gaia DR3","T":7510,"Th":"분광형"},"Nushagak":{"sp":"G5","plx":12.91,"pc":77.4,"M":3.73,"src":"Gaia DR3","T":5660,"Th":"분광형"},"Ogma":{"sp":"G0","plx":13.12,"pc":76.2,"M":3.75,"src":"Gaia DR3","T":5920,"Th":"분광형"},"Okab":{"sp":"A0V","plx":38.23,"pc":26.2,"M":0.9,"src":"Gaia DR3","T":9700,"Th":"분광형"},"Paikauhale":{"sp":"B0 V","plx":6.88,"pc":145.3,"M":-2.99,"src":"Hipparcos","T":31400,"Th":"분광형"},"Peacock":{"sp":"B2.5 V","plx":18.24,"pc":54.8,"M":-1.75,"src":"Hipparcos","T":18800,"Th":"분광형"},"Phact":{"sp":"B7IV","plx":11.4,"pc":87.7,"M":-2.07,"src":"Gaia DR3","T":14000,"Th":"분광형"},"Phecda":{"sp":"A0V","plx":39.21,"pc":25.5,"M":0.38,"src":"Hipparcos","T":9700,"Th":"분광형"},"Pherkad":{"sp":"A3II-III","plx":6.596,"pc":151.6,"M":-2.9,"src":"Gaia DR3","T":8590,"Th":"분광형"},"Phoenicia":{"sp":"K1/2 V","plx":50.94,"pc":19.6,"M":6.33,"src":"Gaia DR3","T":5160,"Th":"분광형"},"Piautos":{"sp":"B9V","plx":5.736,"pc":174.3,"M":-0.29,"src":"Gaia DR3","T":10700,"Th":"분광형"},"Pincoya":{"sp":"K1/3","plx":24.99,"pc":40.0,"M":6.65,"src":"Gaia DR3","T":5160,"Th":"분광형"},"Pipirima":{"sp":"B2 IV","plx":5.663,"pc":176.6,"M":-2.67,"src":"Gaia DR3","T":20600,"Th":"분광형"},"Pleione":{"sp":"B7P","plx":7.241,"pc":138.1,"M":-0.65,"src":"Gaia DR3","T":14000,"Th":"분광형"},"Poerava":{"sp":"F7 V","plx":17.87,"pc":56.0,"M":4.08,"src":"Gaia DR3","T":6280,"Th":"분광형"},"Polaris":{"sp":"F7:Ib-IIv SB","plx":7.54,"pc":132.6,"M":-3.48,"src":"Hipparcos","T":6280,"Th":"분광형"},"Polaris Australis":{"sp":"F0 IV","plx":11.1,"pc":90.1,"M":0.68,"src":"Gaia DR3","T":7220,"Th":"분광형"},"Polis":{"sp":"B2III:","T":20600,"Th":"분광형"},"Pollux":{"sp":"K0III","plx":96.54,"pc":10.4,"M":1.08,"src":"Hipparcos","T":4750,"Th":"분광형"},"Porrima":{"sp":"F0V+...","plx":83.19,"pc":12.0,"M":3.04,"src":"Gaia DR3","T":7220,"Th":"분광형"},"Praecipua":{"sp":"K0III-IV","plx":32.92,"pc":30.4,"M":1.38,"src":"Gaia DR3","T":4750,"Th":"분광형"},"Prima Hyadum":{"sp":"G9III","plx":21.66,"pc":46.2,"M":0.33,"src":"Gaia DR3","T":4810,"Th":"분광형"},"Procyon":{"sp":"F5IV-V","plx":284.56,"pc":3.51,"M":2.67,"src":"Hipparcos","T":6510,"Th":"분광형"},"Propus":{"sp":"M3III","plx":8.48,"pc":117.9,"M":-2.04,"src":"Hipparcos","T":3540,"Th":"분광형"},"Proxima Centauri":{"sp":"M5Ve","plx":768.05,"pc":1.3,"M":15.44,"src":"Gaia DR3","T":3060,"Th":"분광형"},"Ran":{"sp":"K2 V","plx":310.58,"pc":3.22,"M":6.19,"src":"Gaia DR3","T":5040,"Th":"분광형"},"Rana":{"sp":"K0 IV","plx":110.03,"pc":9.09,"M":3.74,"src":"Gaia DR3","T":5280,"Th":"분광형"},"Rapeto":{"sp":"F8 V","plx":20.66,"pc":48.4,"M":3.97,"src":"Gaia DR3","T":6170,"Th":"분광형"},"Rasalas":{"sp":"K2III","plx":26.1,"pc":38.3,"M":0.96,"src":"Gaia DR3","T":4450,"Th":"분광형"},"Rasalgethi":{"sp":"M5II","plx":9.07,"pc":110.3,"M":-1.84,"src":"Hipparcos","T":3380,"Th":"분광형"},"Rasalhague":{"sp":"A5III","plx":67.13,"pc":14.9,"M":1.21,"src":"Hipparcos","T":8080,"Th":"분광형"},"Rastaban":{"sp":"G2II","plx":8.92,"pc":112.1,"M":-2.46,"src":"Gaia DR3","T":5360,"Th":"분광형"},"Regulus":{"sp":"B7V","plx":41.13,"pc":24.3,"M":-0.57,"src":"Hipparcos","T":14000,"Th":"분광형"},"Revati":{"sp":"F 0 VN","plx":24.46,"pc":40.9,"M":2.15,"src":"Gaia DR3","T":7220,"Th":"분광형"},"Rigel":{"sp":"B8 Ia","plx":3.78,"pc":264.6,"M":-6.93,"src":"Hipparcos","T":12300,"Th":"분광형"},"Rigil Kentaurus":{"sp":"G2V","plx":754.83,"pc":1.32,"M":4.38,"src":"Hipparcos","T":5770,"Th":"분광형"},"Rosaliadecastro":{"sp":"G3 V","plx":13.63,"pc":73.4,"M":3.56,"src":"Gaia DR3","T":5730,"Th":"분광형"},"Rotanev":{"sp":"F5III","plx":32.33,"pc":30.9,"M":1.19,"src":"Hipparcos","T":6510,"Th":"분광형"},"Ruchbah":{"sp":"A5Vv SB","plx":32.03,"pc":31.2,"M":0.19,"src":"Gaia DR3","T":8080,"Th":"분광형"},"Rukbat":{"sp":"B8 V","plx":18.11,"pc":55.2,"M":0.25,"src":"Gaia DR3","T":12300,"Th":"분광형"},"Sabik":{"sp":"A2.5Va","plx":36.91,"pc":27.1,"M":0.27,"src":"Hipparcos","T":8710,"Th":"분광형"},"Saclateni":{"sp":"K4IB-II","plx":1.424,"pc":702.0,"M":-5.54,"src":"Gaia DR3","T":4100,"Th":"분광형"},"Sadachbia":{"sp":"A0V","plx":25.86,"pc":38.7,"M":0.92,"src":"Gaia DR3","T":9700,"Th":"분광형"},"Sadalbari":{"sp":"G8III","plx":28.93,"pc":34.6,"M":0.82,"src":"Gaia DR3","T":4870,"Th":"분광형"},"Sadalmelik":{"sp":"G2 Ib","plx":4.945,"pc":202.2,"M":-3.58,"src":"Gaia DR3","T":5360,"Th":"분광형"},"Sadalsuud":{"sp":"G0Ib","plx":5.973,"pc":167.4,"M":-3.22,"src":"Gaia DR3","T":5600,"Th":"분광형"},"Sadr":{"sp":"(F5IAB)","plx":1.78,"pc":561.8,"M":-6.52,"src":"Hipparcos","T":5700,"Th":"색지수"},"Sagarmatha":{"sp":"G8 V","plx":20.16,"pc":49.6,"M":4.94,"src":"Gaia DR3","T":5490,"Th":"분광형"},"Saiph":{"sp":"B0.5 Ia","plx":5.04,"pc":198.4,"M":-4.42,"src":"Hipparcos","T":28700,"Th":"분광형"},"Salm":{"sp":"A5IV","plx":20.71,"pc":48.3,"M":1.16,"src":"Gaia DR3","T":8080,"Th":"분광형"},"Samaya":{"sp":"F7 V","plx":10.76,"pc":92.9,"M":3.72,"src":"Gaia DR3","T":6280,"Th":"분광형"},"Sargas":{"sp":"F0 II","plx":10.86,"pc":92.1,"M":-2.96,"src":"Hipparcos","T":7220,"Th":"분광형"},"Sarin":{"sp":"A3IV","plx":42.48,"pc":23.5,"M":1.26,"src":"Gaia DR3","T":8590,"Th":"분광형"},"Sceptrum":{"sp":"K1 III","plx":28.88,"pc":34.6,"M":1.32,"src":"Gaia DR3","T":4600,"Th":"분광형"},"Scheat":{"sp":"M2II-III","plx":16.64,"pc":60.1,"M":-1.45,"src":"Hipparcos","T":3610,"Th":"분광형"},"Schedar":{"sp":"K0II-IIIvar","plx":14.09,"pc":71.0,"M":-2.02,"src":"Gaia DR3","T":4750,"Th":"분광형"},"Secunda Hyadum":{"sp":"K0III","plx":20.31,"pc":49.2,"M":0.32,"src":"Gaia DR3","T":4750,"Th":"분광형"},"Segin":{"sp":"B2pvar","plx":7.004,"pc":142.8,"M":-2.42,"src":"Gaia DR3","T":20600,"Th":"분광형"},"Seginus":{"sp":"A7IIIvar","plx":37.91,"pc":26.4,"M":0.93,"src":"Gaia DR3","T":7650,"Th":"분광형"},"Sham":{"sp":"G0IB","plx":7.635,"pc":131.0,"M":-1.2,"src":"Gaia DR3","T":5600,"Th":"분광형"},"Shama":{"sp":"G8/K0 IV","plx":18.18,"pc":55.0,"M":5.4,"src":"Gaia DR3","T":5490,"Th":"분광형"},"Sharjah":{"sp":"","plx":68.61,"pc":14.6,"M":10.52,"src":"Gaia DR3","T":3810,"Th":"색지수"},"Shaula":{"sp":"B1.5 IV + B","plx":5.71,"pc":175.1,"M":-4.14,"src":"Hipparcos","T":23300,"Th":"분광형"},"Sheliak":{"sp":"B7V+A8P","plx":3.598,"pc":277.9,"M":-3.62,"src":"Gaia DR3","T":14000,"Th":"분광형"},"Sheratan":{"sp":"A5V...","plx":55.6,"pc":18.0,"M":1.43,"src":"Hipparcos","T":8080,"Th":"분광형"},"Sika":{"sp":"G1 V","plx":16.68,"pc":60.0,"M":3.95,"src":"Gaia DR3","T":5840,"Th":"분광형"},"Sirius":{"sp":"A0m...","plx":379.2,"pc":2.64,"M":1.44,"src":"Hipparcos","T":9700,"Th":"분광형"},"Situla":{"sp":"K1 III","plx":14.71,"pc":68.0,"M":0.88,"src":"Gaia DR3","T":4600,"Th":"분광형"},"Skat":{"sp":"A3V","plx":23.15,"pc":43.2,"M":0.09,"src":"Gaia DR3","T":8590,"Th":"분광형"},"Solaris":{"sp":"K5","plx":20.28,"pc":49.3,"M":6.32,"src":"Gaia DR3","T":4440,"Th":"분광형"},"Spica":{"sp":"B1 V","plx":13.06,"pc":76.6,"M":-3.44,"src":"Hipparcos","T":26000,"Th":"분광형"},"Stribor":{"sp":"G0","plx":12.81,"pc":78.1,"M":3.57,"src":"Gaia DR3","T":5920,"Th":"분광형"},"Sualocin":{"sp":"B9V","plx":13.73,"pc":72.8,"M":-0.45,"src":"Gaia DR3","T":10700,"Th":"분광형"},"Subra":{"sp":"A2+F6II","plx":24.2,"pc":41.3,"M":0.44,"src":"Gaia DR3","T":8840,"Th":"분광형"},"Suhail":{"sp":"K4 III","plx":5.99,"pc":166.9,"M":-3.88,"src":"Hipparcos","T":4100,"Th":"분광형"},"Sulafat":{"sp":"A0P","plx":4.966,"pc":201.4,"M":-3.27,"src":"Gaia DR3","T":9700,"Th":"분광형"},"Syrma":{"sp":"F7V","plx":45.4,"pc":22.0,"M":2.36,"src":"Gaia DR3","T":6280,"Th":"분광형"},"Tabit":{"sp":"F4V","plx":124.62,"pc":8.02,"M":3.67,"src":"Gaia DR3","T":6610,"Th":"분광형"},"Taiyangshou":{"sp":"K0III","plx":16.44,"pc":60.8,"M":-0.23,"src":"Gaia DR3","T":4750,"Th":"분광형"},"Taiyi":{"sp":"F 0 V","plx":33.97,"pc":29.4,"M":2.89,"src":"Gaia DR3","T":7220,"Th":"분광형"},"Talitha":{"sp":"A7IV","plx":68.0,"pc":14.7,"M":2.28,"src":"Gaia DR3","T":7650,"Th":"분광형"},"Tania Australis":{"sp":"M0III","plx":17.8,"pc":56.2,"M":-0.69,"src":"Gaia DR3","T":3850,"Th":"분광형"},"Tania Borealis":{"sp":"A2IV","plx":14.46,"pc":69.2,"M":-0.75,"src":"Gaia DR3","T":8840,"Th":"분광형"},"Tapecue":{"sp":"G6 IV/V","plx":30.75,"pc":32.5,"M":5.54,"src":"Gaia DR3","T":5600,"Th":"분광형"},"Tarazed":{"sp":"K3I-II","plx":5.59,"pc":178.9,"M":-3.54,"src":"Gaia DR3","T":4300,"Th":"분광형"},"Tarf":{"sp":"K4III","plx":10.1,"pc":99.0,"M":-1.45,"src":"Gaia DR3","T":4100,"Th":"분광형"},"Taygeta":{"sp":"B6IV","plx":9.544,"pc":104.8,"M":-0.8,"src":"Gaia DR3","T":14500,"Th":"분광형"},"Tegmine":{"sp":"F8V","plx":39.87,"pc":25.1,"M":3.24,"src":"Hipparcos","T":6170,"Th":"분광형"},"Tejat":{"sp":"M3IIIvar","plx":14.08,"pc":71.0,"M":-1.39,"src":"Hipparcos","T":3540,"Th":"분광형"},"Terebellum":{"sp":"G3/5 III","plx":38.48,"pc":26.0,"M":2.63,"src":"Hipparcos","T":5250,"Th":"분광형"},"Theemin":{"sp":"G8 III","plx":15.45,"pc":64.7,"M":-0.25,"src":"Gaia DR3","T":4870,"Th":"분광형"},"Thuban":{"sp":"A0III SB","plx":12.52,"pc":79.9,"M":-0.84,"src":"Gaia DR3","T":9700,"Th":"분광형"},"Tiaki":{"sp":"M5 III(W)","plx":18.43,"pc":54.3,"M":-1.55,"src":"Hipparcos","T":3380,"Th":"분광형"},"Tianguan":{"sp":"B4IIIp","plx":7.33,"pc":136.4,"M":-2.7,"src":"Hipparcos","T":16350,"Th":"분광형"},"Tianyi":{"sp":"K5","plx":4.224,"pc":236.7,"M":-1.44,"src":"Gaia DR3","T":3950,"Th":"분광형"},"Timir":{"sp":"K0 III/IV","plx":14.21,"pc":70.4,"M":2.65,"src":"Gaia DR3","T":4750,"Th":"분광형"},"Titawin":{"sp":"F8V","plx":74.19,"pc":13.5,"M":3.44,"src":"Gaia DR3","T":6170,"Th":"분광형"},"Toliman":{"sp":"K1V","plx":754.83,"pc":1.32,"M":5.74,"src":"Hipparcos","T":5160,"Th":"분광형"},"Tonatiuh":{"sp":"G9III","plx":9.928,"pc":100.7,"M":0.78,"src":"Gaia DR3","T":4810,"Th":"분광형"},"Torcular":{"sp":"G8III","plx":12.53,"pc":79.8,"M":-0.22,"src":"Gaia DR3","T":4870,"Th":"분광형"},"Tupa":{"sp":"F8/G0V","plx":25.76,"pc":38.8,"M":4.04,"src":"Gaia DR3","T":6170,"Th":"분광형"},"Tupi":{"sp":"F8/G0 V","plx":29.86,"pc":33.5,"M":4.5,"src":"Gaia DR3","T":6170,"Th":"분광형"},"Tureis":{"sp":"F2mF5IIp","plx":51.4,"pc":19.5,"M":1.38,"src":"Gaia DR3","T":6810,"Th":"분광형"},"Ukdah":{"sp":"K2 III","plx":12.91,"pc":77.5,"M":-0.55,"src":"Gaia DR3","T":4450,"Th":"분광형"},"Uklun":{"sp":"G6 V","plx":25.35,"pc":39.4,"M":4.49,"src":"Gaia DR3","T":5600,"Th":"분광형"},"Unukalhai":{"sp":"K2III","plx":43.95,"pc":22.8,"M":0.84,"src":"Gaia DR3","T":4450,"Th":"분광형"},"Uruk":{"sp":"F8V","plx":9.219,"pc":108.5,"M":3.79,"src":"Gaia DR3","T":6170,"Th":"분광형"},"Vega":{"sp":"A0V","plx":130.23,"pc":7.68,"M":0.6,"src":"Hipparcos","T":9700,"Th":"분광형"},"Veritate":{"sp":"G8III","plx":13.17,"pc":75.9,"M":0.82,"src":"Gaia DR3","T":4870,"Th":"분광형"},"Vindemiatrix":{"sp":"G8III","plx":30.21,"pc":33.1,"M":0.25,"src":"Gaia DR3","T":4870,"Th":"분광형"},"Wasat":{"sp":"F0IV...","plx":53.77,"pc":18.6,"M":2.17,"src":"Gaia DR3","T":7220,"Th":"분광형"},"Wazn":{"sp":"K1.5 III","plx":36.9,"pc":27.1,"M":0.96,"src":"Gaia DR3","T":4520,"Th":"분광형"},"Wezen":{"sp":"F8Ia","plx":2.03,"pc":492.6,"M":-6.63,"src":"Hipparcos","T":6170,"Th":"분광형"},"Wurren":{"sp":"B7 V","plx":11.21,"pc":89.2,"M":-0.73,"src":"Gaia DR3","T":14000,"Th":"분광형"},"Xamidimura":{"sp":"B1.5IV + B","plx":1.873,"pc":533.8,"M":-5.64,"src":"Gaia DR3","T":23300,"Th":"분광형"},"Xihe":{"sp":"K0","plx":7.536,"pc":132.7,"M":0.43,"src":"Gaia DR3","T":4750,"Th":"분광형"},"Xuange":{"sp":"A0P","plx":32.59,"pc":30.7,"M":1.75,"src":"Gaia DR3","T":9700,"Th":"분광형"},"Yed Posterior":{"sp":"G8III","plx":30.51,"pc":32.8,"M":0.65,"src":"Gaia DR3","T":4870,"Th":"분광형"},"Yed Prior":{"sp":"M1III","plx":20.41,"pc":49.0,"M":-0.72,"src":"Gaia DR3","T":3720,"Th":"분광형"},"Yildun":{"sp":"A1V","plx":17.88,"pc":55.9,"M":0.61,"src":"Gaia DR3","T":9270,"Th":"분광형"},"Zaniah":{"sp":"A2 IV","plx":13.17,"pc":75.9,"M":0.2,"src":"Gaia DR3","T":8840,"Th":"분광형"},"Zaurak":{"sp":"M1 IIIBCA-1,CR-1","plx":17.0,"pc":58.8,"M":-0.88,"src":"Gaia DR3","T":3720,"Th":"분광형"},"Zavijava":{"sp":"F9 V","plx":90.89,"pc":11.0,"M":3.38,"src":"Gaia DR3","T":6040,"Th":"분광형"},"Zhang":{"sp":"G6/8 III","plx":12.36,"pc":80.9,"M":-0.43,"src":"Hipparcos","T":4960,"Th":"분광형"},"Zibal":{"sp":"A2 III","plx":27.4,"pc":36.5,"M":1.99,"src":"Gaia DR3","T":8840,"Th":"분광형"},"Zosma":{"sp":"A4V","plx":55.82,"pc":17.9,"M":1.29,"src":"Hipparcos","T":8330,"Th":"분광형"},"Zubenelgenubi":{"sp":"A3 III/V","plx":43.03,"pc":23.2,"M":0.92,"src":"Hipparcos","T":8590,"Th":"분광형"},"Zubenelhakrabi":{"sp":"K0III","plx":20.26,"pc":49.4,"M":0.44,"src":"Gaia DR3","T":4750,"Th":"분광형"},"Zubeneschamali":{"sp":"B8V","plx":17.62,"pc":56.8,"M":-1.16,"src":"Hipparcos","T":12300,"Th":"분광형"},"Ahadi|고물자리 π":{"sp":"K3 IB","plx":5.762,"pc":173.5,"M":-3.49,"src":"Gaia DR3","T":4300,"Th":"분광형","ra":109.29,"dec":-37.1,"con":"Pup"},"Asellus Primus|목동자리 θ":{"sp":"F6IV","plx":69.07,"pc":14.5,"M":3.24,"src":"Gaia DR3","T":6400,"Th":"분광형","ra":216.3,"dec":51.85,"con":"Boo"},"Asellus Secundus|목동자리 ι":{"sp":"A7V","plx":33.89,"pc":29.5,"M":2.4,"src":"Gaia DR3","T":7650,"Th":"분광형","ra":214.04,"dec":51.37,"con":"Boo"},"Asellus Tertius|목동자리 κ":{"sp":"A7IV","plx":20.15,"pc":49.6,"M":1.05,"src":"Gaia DR3","T":7650,"Th":"분광형","ra":213.37,"dec":51.79,"con":"Boo"},"Betria|남쪽삼각형자리 β":{"sp":"F2III","plx":80.49,"pc":12.4,"M":2.36,"src":"Gaia DR3","T":6810,"Th":"분광형","ra":238.79,"dec":-63.43,"con":"TrA"},"Double Double|거문고자리 ε":{"sp":"A 8 VN","plx":20.34,"pc":49.2,"M":1.13,"src":"Gaia DR3","T":7510,"Th":"분광형","ra":281.1,"dec":39.61,"con":"Lyr"},"Girtab|전갈자리 κ":{"sp":"B1.5 III","plx":6.75,"pc":148.1,"M":-3.46,"src":"Hipparcos","T":23300,"Th":"분광형","ra":265.62,"dec":-39.03,"con":"Sco"},"Graffias|전갈자리 ξ":{"sp":"F3/5 V","plx":41.1,"pc":24.3,"M":3.07,"src":"Gliese","T":6710,"Th":"분광형","ra":241.09,"dec":-11.37,"con":"Sco"},"Han|뱀주인자리 ζ":{"sp":"O9.5V","plx":7.409,"pc":135.0,"M":-3.11,"src":"Gaia DR3","T":31650,"Th":"분광형","ra":249.29,"dec":-10.57,"con":"Oph"},"Kapteyn's star|화가자리 VZ":{"sp":"M0V","plx":254.2,"pc":3.93,"M":10.89,"src":"Gaia DR3","T":3850,"Th":"분광형","ra":77.92,"dec":-45.02,"con":"Pic"},"Muliphen|뱀주인자리 γ":{"sp":"A0 Van","plx":33.62,"pc":29.7,"M":1.38,"src":"Gaia DR3","T":9700,"Th":"분광형","ra":266.97,"dec":2.71,"con":"Oph"},"Navi|카시오페이아자리 γ":{"sp":"B0IV:E","plx":5.94,"pc":168.4,"M":-3.98,"src":"Hipparcos","T":31400,"Th":"분광형","ra":14.18,"dec":60.72,"con":"Cas"},"Namalsadirah|궁수자리 τ":{"sp":"K1/2 III","plx":28.32,"pc":35.3,"M":0.58,"src":"Gaia DR3","T":4600,"Th":"분광형","ra":286.74,"dec":-27.67,"con":"Sgr"},"Namalsadirah|궁수자리 φ":{"sp":"B8.5 III","plx":13.63,"pc":73.4,"M":-1.16,"src":"Hipparcos","T":11500,"Th":"분광형","ra":281.41,"dec":-26.99,"con":"Sgr"},"Namalwarid|궁수자리 η":{"sp":"M2 III","plx":23.89,"pc":41.9,"M":-0.01,"src":"Gaia DR3","T":3610,"Th":"분광형","ra":274.41,"dec":-36.76,"con":"Sgr"},"Regor|돛자리 γ":{"sp":"WC 8","plx":2.92,"pc":342.5,"M":-5.92,"src":"Hipparcos","T":12390,"Th":"색지수","ra":122.38,"dec":-47.34,"con":"Vel"}};
+const EXO15=["Copernicus","Helvetios","Libertas","Fafnir","Ogma","Veritate","Musica","Tonatiuh","Intercrus","Chalawan","Cervantes","Lich"];
+const STARS=RAW.split("\n").map((l,i)=>{const [n,d,des,id,con,mag,band,ra,dec,date]=l.split("|");const w=LW[n]||{};
+  const exo=date==="2019-12-17"||date==="2020-03-01"||EXO15.includes(n);
+  const alias=(KO[n]||"").match(/\((.+)\)/);
+  return {i,n,d:d||n,des,id,con,mag:mag===""?null:+mag,band,ra:+ra,dec:+dec,date,exo,ko:w.ko||(KO[n]||"").replace(/ \(.+\)$/,""),alias:alias?alias[1]:"",o:w.o||"",nt:w.nt||"",pl:w.pl||"",ct:w.ct||"",w:w.w||""};});
+LW_EXTRA.forEach(e=>{const i=STARS.length;
+  if(e.u)STARS.push({i,n:e.n,d:e.n,des:"",id:"",con:"",mag:e.mag===""||isNaN(+e.mag)?null:+e.mag,band:"",ra:null,dec:null,date:"",exo:false,un:true,ko:(e.ko||"").replace(/[()]/g,"").trim(),alias:"",o:e.o||"",nt:e.nt||"",pl:"",ct:"",w:e.w||""});
+  else STARS.push({i,n:e.n,d:e.n,des:e.des,id:"",con:"",mag:null,band:"",ra:null,dec:null,date:"2022",exo:true,alias:"",o:"",ko:e.n==="Maru"?"마루":"",nt:"2022년 NameExoWorlds 3차 공모",pl:e.pl,ct:e.ct,w:""});});
+STARS.forEach(s=>{const f=PHYS[s.un?s.n+"|"+s.w:s.n];s.ph=f||null;
+  if(f&&s.un&&f.ra!=null){s.ra=f.ra;s.dec=f.dec;s.con=f.con}});
+const OFFICIAL=STARS.filter(s=>!s.un).length;
+
+const $=s=>document.querySelector(s);
+const conSel=$("#con");
+[...new Set(STARS.map(s=>s.con).filter(Boolean))].sort((a,b)=>(CON[a]||a).localeCompare(CON[b]||b,"ko")).forEach(c=>{
+  const o=document.createElement("option");o.value=c;o.textContent=`${CON[c]||c} (${c})`;conSel.append(o)});
+
+const orgSel=$("#org");
+Object.entries(STARS.reduce((m,s)=>{if(s.o&&s.o!=="(미상)")m[s.o]=(m[s.o]||0)+1;return m},{})).sort((a,b)=>b[1]-a[1]).forEach(([o,c])=>{const e=document.createElement("option");e.value=o;e.textContent=`${o} (${c})`;orgSel.append(e)});
+let kind="all", shown=80, filtered=[], hover=null;
+function norm(s){return s.normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase().replace(/\s+/g,"")}
+const GREEK={alpha:"α",beta:"β",gamma:"γ",delta:"δ",epsilon:"ε",zeta:"ζ",eta:"η",theta:"θ",iota:"ι",kappa:"κ",lambda:"λ",mu:"μ",nu:"ν",xi:"ξ",omicron:"ο",pi:"π",rho:"ρ",sigma:"σ",tau:"τ",upsilon:"υ",phi:"φ",chi:"χ",psi:"ψ",omega:"ω"};
+const CON_EN={And:"Andromeda",Ant:"Antlia",Aps:"Apus",Aqr:"Aquarius",Aql:"Aquila",Ara:"Ara",Ari:"Aries",Aur:"Auriga",Boo:"Bootes",Cae:"Caelum",Cam:"Camelopardalis",Cnc:"Cancer",CVn:"Canes Venatici",CMa:"Canis Major",CMi:"Canis Minor",Cap:"Capricornus",Car:"Carina",Cas:"Cassiopeia",Cen:"Centaurus",Cep:"Cepheus",Cet:"Cetus",Cha:"Chamaeleon",Cir:"Circinus",Col:"Columba",Com:"Coma Berenices",CrA:"Corona Australis",CrB:"Corona Borealis",Crv:"Corvus",Crt:"Crater",Cru:"Crux Southern Cross",Cyg:"Cygnus",Del:"Delphinus",Dor:"Dorado",Dra:"Draco",Equ:"Equuleus",Eri:"Eridanus",For:"Fornax",Gem:"Gemini",Gru:"Grus",Her:"Hercules",Hor:"Horologium",Hya:"Hydra",Hyi:"Hydrus",Ind:"Indus",Lac:"Lacerta",Leo:"Leo",LMi:"Leo Minor",Lep:"Lepus",Lib:"Libra",Lup:"Lupus",Lyn:"Lynx",Lyr:"Lyra",Men:"Mensa",Mic:"Microscopium",Mon:"Monoceros",Mus:"Musca",Nor:"Norma",Oct:"Octans",Oph:"Ophiuchus",Ori:"Orion",Pav:"Pavo",Peg:"Pegasus",Per:"Perseus",Phe:"Phoenix",Pic:"Pictor",Psc:"Pisces",PsA:"Piscis Austrinus",Pup:"Puppis",Pyx:"Pyxis",Ret:"Reticulum",Sge:"Sagitta",Sgr:"Sagittarius",Sco:"Scorpius Scorpio",Scl:"Sculptor",Sct:"Scutum",Ser:"Serpens",Sex:"Sextans",Tau:"Taurus",Tel:"Telescopium",Tri:"Triangulum",TrA:"Triangulum Australe",Tuc:"Tucana",UMa:"Ursa Major Big Dipper",UMi:"Ursa Minor Little Dipper",Vel:"Vela",Vir:"Virgo",Vol:"Volans",Vul:"Vulpecula"};
+const CON_ALT={Cas:"카시오페아",Her:"헤라클레스",Cen:"센타우루스",Peg:"페가소스",Eri:"에리다니",Aur:"마부",Ser:"뱀머리 뱀꼬리",Cru:"남십자성",Sco:"스콜피온",Oph:"땅꾼",Boo:"목자",Psc:"쌍어",Gem:"쌍자",Sgr:"사수 인마",Aqr:"보병",Cap:"마갈",Vir:"처녀 쌍녀",Lib:"천평",Ari:"백양",Tau:"금우",Cnc:"거해",Leo:"사자",Per:"페르세오스",Cep:"세페우스",Lyr:"리라",Cyg:"고니",Aql:"수리"};
+const conNames=c=>{if(!c)return"";return [CON[c],CON[c].replace(/자리$/,""),CON_EN[c]||"",CON_ALT[c]||""].join("|")};
+function hay(s){return norm([s.n,s.d,s.ko,s.alias,s.des,s.id+" "+s.con,s.id+s.con,conNames(s.con),conNames(Object.keys(CON).find(k=>s.w&&s.w.startsWith(CON[k]))),s.w,s.o,s.nt,s.pl,s.ct].join("|"))}
+STARS.forEach(s=>s.h=hay(s));
+function fmtRA(d){const h=d/15,H=Math.floor(h),m=(h-H)*60;return `${H}h ${m.toFixed(1)}m`}
+function fmtDec(d){return `${d>=0?"+":"−"}${Math.abs(d).toFixed(2)}°`}
+function desig(s){return s.id?`${s.id} ${s.con}`:s.des}
+
+function apply(){
+  let q=$("#q").value.trim();
+  Object.entries(GREEK).forEach(([k,v])=>{q=q.replace(new RegExp("\\b"+k+"\\b","gi"),v)});
+  const nq=norm(q), c=conSel.value;
+  const og=orgSel.value;
+  filtered=STARS.filter(s=>(!c||s.con===c)&&(!og||s.o===og)&&(kind==="all"?!s.un:kind==="u"?s.un:(!s.un&&(kind==="e")===s.exo))&&(!nq||s.h.includes(nq)));
+  const sort=$("#sort").value;
+  if(sort==="mag")filtered.sort((a,b)=>(a.mag??99)-(b.mag??99));
+  else if(sort==="date")filtered.sort((a,b)=>b.date.localeCompare(a.date)||a.n.localeCompare(b.n));
+  else if(sort==="en")filtered.sort((a,b)=>a.n.localeCompare(b.n));
+  else filtered.sort((a,b)=>(a.ko||"힣"+a.n).localeCompare(b.ko||"힣"+b.n,"ko"));
+  shown=80; render(); draw();
+}
+function render(){
+  const list=$("#list");
+  $("#count").textContent=`${filtered.length}개 표시 · IAU 공인 ${OFFICIAL}개 · 비공식 ${STARS.length-OFFICIAL}개`;
+  if(!filtered.length){list.innerHTML='<div class="empty">조건에 맞는 별이 없습니다. 검색어나 별자리를 바꿔 보세요.</div>';$("#more").hidden=true;return}
+  const rows=filtered.slice(0,shown).map(s=>{
+    const r=s.mag==null?3:Math.max(3,Math.min(14,12-s.mag*1.4));
+    const sub=s.id?desig(s):(s.w||s.des);
+    return `<div class="row${s.exo?" exo":""}${s.un?" un":""}" role="listitem" tabindex="0" data-i="${s.i}">
+      <span class="dot"><i style="width:${r}px;height:${r}px"></i></span>
+      <span class="nm"><b${s.ko?"":' class="en"'}>${s.ko||s.d}</b><small>${s.ko?`<span>${s.d}</span>`:""}<span class="sub">${s.ko?" · ":""}${sub}</span></small></span>
+      <span class="des">${s.des||"—"}${s.o?`<br><small class="org">${s.o}</small>`:""}</span>
+      <span class="con">${s.con?CON[s.con]:(s.w||(s.ct?s.ct+" 제출":"—"))}</span>
+      <span class="mag">${s.mag==null?"—":s.mag.toFixed(2)}</span></div>`}).join("");
+  list.innerHTML=`<div class="hdr"><span></span><span>이름</span><span class="h-des">카탈로그</span><span class="h-con">별자리</span><span>등급</span></div>`+rows;
+  // hide redundant sub-designation on wide screens
+  if(innerWidth>640)list.querySelectorAll(".sub").forEach(e=>{e.textContent=""});
+  $("#more").hidden=filtered.length<=shown;
+}
+$("#more").onclick=()=>{shown+=120;render()};
+$("#list").addEventListener("click",e=>{const r=e.target.closest(".row");if(r)openStar(STARS[+r.dataset.i])});
+$("#list").addEventListener("keydown",e=>{if(e.key==="Enter"){const r=e.target.closest(".row");if(r)openStar(STARS[+r.dataset.i])}});
+$("#q").addEventListener("input",apply); conSel.onchange=apply; orgSel.onchange=apply; $("#sort").onchange=apply;
+document.querySelectorAll(".seg button").forEach(b=>b.onclick=()=>{kind=b.dataset.k;document.querySelectorAll(".seg button").forEach(x=>x.setAttribute("aria-pressed",x===b));apply()});
+
+function fmtLy(pc){const ly=pc*3.26156;return ly<100?ly.toFixed(1):Math.round(ly).toLocaleString("ko-KR")}
+function tColor(T){return T>=25000?"#9bb0ff":T>=10000?"#aabfff":T>=7500?"#cad7ff":T>=6000?"#f8f7ff":T>=5200?"#fff4ea":T>=3700?"#ffd2a1":"#ffad6b"}
+function physPanel(s){
+  const f=s.ph||{}, vm=s.mag!=null?s.mag:null;
+  const cell=(k,v,u,note)=>`<div class="pc"><span class="pk">${k}</span><span class="pv">${v==null?"—":v}${v!=null&&u?`<small>${u}</small>`:""}</span>${note?`<span class="pn">${note}</span>`:""}</div>`;
+  const app=vm!=null?vm.toFixed(2):null;
+  return `<div class="phys">
+    ${cell("연주시차",f.plx!=null?(f.plx/1000).toPrecision(f.plx>=1000?4:3)+"″":null,"",f.plx!=null?`${f.plx.toLocaleString("ko-KR")} mas · ${f.src}`:(s.ph?"":"측정값 없음"))}
+    ${cell("겉보기 등급",app,"",vm!=null?(s.band?s.band+" 밴드":""):"")}
+    ${cell("절대 등급",f.M!=null?f.M.toFixed(2):null,"",f.M!=null?"M = m − 5 log d + 5":"")}
+    ${cell("유효 온도",f.T!=null?f.T.toLocaleString("ko-KR"):null,"K",f.T!=null?`<i class="tsw" style="background:${tColor(f.T)}"></i>${f.Th} 기준 추정`:"")}
+  </div>${s.ph?"":`<p class="pmiss">이 별은 HYG 성표에 없어 물리량을 표시하지 못했습니다. 대부분 13등급 안팎의 어두운 외계행성 모항성이거나 펄서입니다.</p>`}`;
+}
+function openStar(s){
+  const wiki=`https://ko.wikipedia.org/wiki/${encodeURIComponent(s.ko||s.n)}`;
+  const tag=s.un?["u","비공식 이름 (IAU 미등재)"]:s.exo?["e","외계행성 모항성 (NameExoWorlds)"]:["t","전통 이름"];
+  const row=(k,v)=>v?`<dt>${k}</dt><dd>${v}</dd>`:"";
+  $("#dlgBody").innerHTML=`<h2>${s.ko||s.d}</h2><div class="ko">${s.ko?s.d:""}${s.alias?(s.ko?" · ":"")+s.alias:""}</div>
+    <div><span class="chip ${tag[0]}" style="margin-left:0">${tag[1]}</span>${s.o?`<span class="chip o">${s.o} 유래</span>`:""}</div>
+    ${s.nt?`<p class="note">${s.nt}</p>`:""}
+    ${physPanel(s)}
+    <dl class="kv">
+      ${row("별자리",s.con?`${CON[s.con]} (${s.con})`:"")}
+      ${row(s.con?"위키 표기":"대상",s.w)}
+      ${row("바이어/플램스티드",s.id?`${s.id} ${s.con}`:"")}
+      ${row("카탈로그 번호",s.des)}
+      ${row("분광형",s.ph&&s.ph.sp)}
+      ${row("거리",s.ph&&s.ph.pc?`${s.ph.pc} pc · ${fmtLy(s.ph.pc)}광년`:"")}
+      ${row("적경 (J2000)",s.ra==null?"":`${fmtRA(s.ra)} · ${s.ra.toFixed(2)}°`)}
+      ${row("적위 (J2000)",s.dec==null?"":fmtDec(s.dec))}
+      ${row("행성 이름",s.pl)}
+      ${row("이름 제출 국가",s.ct)}
+      ${row("IAU 승인",s.date==="2022"?"2022년 공모":s.date)}
+    </dl>
+    <div class="acts"><a href="${wiki}" target="_blank" rel="noopener">위키백과에서 보기</a><button class="primary" id="close">닫기</button></div>`;
+  $("#close").onclick=()=>$("#dlg").close();
+  $("#dlg").showModal();
+}
+$("#dlg").addEventListener("click",e=>{if(e.target.id==="dlg")$("#dlg").close()});
+
+// sky chart
+const cv=$("#cv"),ctx=cv.getContext("2d");
+function xy(s){return [cv.width*(1-s.ra/360),cv.height*(0.5-s.dec/180)]}
+function draw(){
+  const W=cv.width,H=cv.height,cs=getComputedStyle(document.documentElement);
+  ctx.fillStyle=cs.getPropertyValue("--sky");ctx.fillRect(0,0,W,H);
+  ctx.strokeStyle=cs.getPropertyValue("--skyline");ctx.lineWidth=1;
+  for(let h=0;h<=24;h+=2){const x=W*(1-h/24);ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke()}
+  for(let d=-60;d<=60;d+=30){const y=H*(.5-d/180);ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke()}
+  ctx.fillStyle="#56608a";ctx.font="18px IBM Plex Mono, monospace";
+  for(let h=2;h<24;h+=4)ctx.fillText(h+"h",W*(1-h/24)+4,H-30);
+  const set=new Set(filtered.map(s=>s.i)), gold=cs.getPropertyValue("--gold"), exo=cs.getPropertyValue("--exo");
+  STARS.forEach(s=>{if(s.ra==null)return;const[x,y]=xy(s),r=s.mag==null?1.6:Math.max(1.4,6.5-s.mag*.75),on=set.has(s.i);
+    ctx.globalAlpha=on?1:.13;ctx.fillStyle=s.exo?exo:"#fff6dc";ctx.beginPath();ctx.arc(x,y,r,0,7);ctx.fill();
+    if(on&&!s.exo&&s.mag!=null&&s.mag<1.5){ctx.globalAlpha=.25;ctx.fillStyle=gold;ctx.beginPath();ctx.arc(x,y,r*2.3,0,7);ctx.fill()}});
+  ctx.globalAlpha=1;
+  if(filtered.length<=12)filtered.forEach(s=>{if(s.ra==null)return;const[x,y]=xy(s);ctx.fillStyle="#dfe4ff";ctx.font="20px IBM Plex Sans KR, sans-serif";ctx.fillText(s.ko||s.d,x+9,y-7)});
+  if(hover){const[x,y]=xy(hover);ctx.strokeStyle="#fff";ctx.lineWidth=2;ctx.beginPath();ctx.arc(x,y,11,0,7);ctx.stroke()}
+}
+function nearest(e){const b=cv.getBoundingClientRect(),mx=(e.clientX-b.left)*cv.width/b.width,my=(e.clientY-b.top)*cv.height/b.height;
+  const set=new Set(filtered.map(s=>s.i));let best=null,bd=22*22;
+  STARS.forEach(s=>{if(!set.has(s.i)||s.ra==null)return;const[x,y]=xy(s),d=(x-mx)**2+(y-my)**2;if(d<bd){bd=d;best=s}});return best}
+cv.addEventListener("mousemove",e=>{const s=nearest(e),tip=$("#tip");hover=s;draw();
+  if(!s){tip.hidden=true;return}const b=cv.getBoundingClientRect(),[x,y]=xy(s);
+  tip.style.left=(x*b.width/cv.width)+"px";tip.style.top=(y*b.height/cv.height)+"px";tip.textContent=(s.ko?s.ko+" · ":"")+s.d;tip.hidden=false});
+cv.addEventListener("mouseleave",()=>{hover=null;$("#tip").hidden=true;draw()});
+cv.addEventListener("click",e=>{const s=nearest(e);if(s)openStar(s)});
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change",draw);
+new MutationObserver(draw).observe(document.documentElement,{attributes:true,attributeFilter:["data-theme"]});
+document.fonts&&document.fonts.ready.then(draw);
+apply();
+</script>
+</body>
+</html>
